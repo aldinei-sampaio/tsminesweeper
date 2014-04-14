@@ -1,0 +1,36 @@
+﻿body {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 10pt;
+}
+
+span {
+    font-style: italic;
+}
+
+.good {
+    color: green;
+}
+
+.good li {
+    font-weight: bold;
+    margin-top: 3px;
+}
+
+.good li ul li {
+    font-weight: normal;
+    margin: 0;
+}
+
+.bad {
+    color: red;
+}
+
+.bad li {
+    font-weight: bold;
+    margin-top: 3px;
+}
+
+.bad li ul li {
+    font-weight: normal;
+    margin: 0;
+}

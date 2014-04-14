@@ -27,6 +27,10 @@
         public onElapsedTime: IMessageEvent<number> = new TypedEvent();
 
         constructor(rows: number, cols: number) {
+            if (rows <= 0 || cols <= 0) {
+                throw ('rows e cols precisam ser maiores que zero');
+            }
+
             this._rows = rows;
             this._cols = cols;
             this._minRow = 0;
@@ -70,6 +74,9 @@
         }
 
         public getSquare(row: number, col: number): Square {
+            if (row < this._minRow || row > this._maxRow || col < this._minCol || col > this._maxCol) {
+                throw ('Valor de row ou col inválido');
+            }
             return this._squares[row][col];
         }
 
