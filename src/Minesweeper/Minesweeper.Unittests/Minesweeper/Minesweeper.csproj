@@ -18,7 +18,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="app.css" />
-    <Content Include="app.full.js" />
     <Content Include="Content\themes\base\images\animated-overlay.gif" />
     <Content Include="Content\themes\base\images\ui-bg_flat_0_aaaaaa_40x100.png" />
     <Content Include="Content\themes\base\images\ui-bg_flat_75_ffffff_40x100.png" />
@@ -109,7 +108,6 @@
     <Content Include="Images\WrongFlag.png" />
     <Content Include="index.html" />
     <Content Include="packages.config" />
-    <Content Include="app.full.js.map" />
     <None Include="aldinei - FTP.pubxml" />
     <None Include="aldinei - Web Deploy.pubxml" />
     <None Include="Scripts\jquery-2.1.0.intellisense.js" />
