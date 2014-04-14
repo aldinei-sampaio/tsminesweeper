@@ -154,3 +154,9 @@ $RECYCLE.BIN/
 
 # Mac desktop service store files
 .DS_Store
+/src/Minesweeper/Minesweeper.Unittests/app.full.d.ts
+/src/Minesweeper/Minesweeper.Unittests/app.full.js
+/src/Minesweeper/Minesweeper.Unittests/app.full.js.map
+/src/Minesweeper/Minesweeper.Unittests/Minesweeper/app.full.js
+/src/Minesweeper/Minesweeper.Unittests/Minesweeper/app.full.js.map
+/src/Minesweeper/Minesweeper.Unittests/Tests/tsUnit.js.map
