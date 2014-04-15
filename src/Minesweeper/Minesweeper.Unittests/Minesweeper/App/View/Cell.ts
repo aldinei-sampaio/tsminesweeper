@@ -32,21 +32,17 @@
 
         private showFlag(): void {
             this._button.empty();
-            this.addImage(this._button, 'Flag');
+            App.addImage(this._button, 'Flag');
         }
 
         private showUnknown(): void {
             this._button.empty();
-            this.addImage(this._button, 'Unknown');
-        }
-
-        private addImage(container: JQuery, imageName: String) {
-            container.append($('<img/>').attr('src', 'Images/' + imageName + '.png'));
+            App.addImage(this._button, 'Unknown');
         }
 
         private showWrongFlag(): void {
             this._button.empty();
-            this.addImage(this._button, 'WrongFlag');
+            App.addImage(this._button, 'WrongFlag');
             this._button.prop("disabled", true);
         }
 
@@ -55,11 +51,11 @@
             var mines = this._square.displayNumber;
 
             if (this._square.hasMine) {
-                this.addImage(div, 'Mine');
+                App.addImage(div, 'Mine');
             } else if (mines == 0) {
                 div.html('&nbsp;');
             } else {
-                this.addImage(div, mines.toString());
+                App.addImage(div, mines.toString());
 
                 if (isEnabled) {
                     this._container.bind('mouseup', (e) => {

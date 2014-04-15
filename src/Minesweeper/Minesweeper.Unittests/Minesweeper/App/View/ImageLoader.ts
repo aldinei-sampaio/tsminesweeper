@@ -4,9 +4,11 @@
         public onLoaded: Model.IEvent = new Model.TypedEvent();
 
         public load(): void {
+            var preloadDiv = $('<div/>').appendTo($('body')).attr('style', 'display:none');
+
             var loadedCount = 0;
             this.imageList.forEach((name) => {
-                $('<img>').attr({ src: 'Images/' + name + '.png' }).load(() => {
+                App.addImage(preloadDiv, name).load(() => {
                     loadedCount++;
                     if (loadedCount == this.imageList.length) {
                         this.onLoaded.trigger();

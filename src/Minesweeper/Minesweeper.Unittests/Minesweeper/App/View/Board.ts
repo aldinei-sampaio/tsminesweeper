@@ -159,25 +159,21 @@
                 .appendTo(td)
                 .addClass('resetPanel');
             this._resetButton = $('<button/>').appendTo(resetPanel);
-            this.addImage(this._resetButton, 'Ready');
+            App.addImage(this._resetButton, 'Ready');
             this._resetButton.bind('click', () => { this.reset() });
         }
 
         private showDisplay(panel: JQuery, value: number, labelImage : string): void {
             panel.empty();
 
-            this.addImage(panel, labelImage);
+            App.addImage(panel, labelImage);
 
             var digits = value.toString().split('');
             var startDigit = digits.length - 3;
             for (var n = digits.length - 3; n < digits.length; n++) {
                 var imageName = n < 0 ? '0' : digits[n];
-                this.addImage(panel, 'Counter' + imageName);
+                App.addImage(panel, 'Counter' + imageName);
             }
-        }
-
-        private addImage(container: JQuery, imageName: String) {
-            container.append($('<img/>').attr('src', 'Images/' + imageName + '.png'));
         }
 
         public reset(): void {
@@ -218,13 +214,13 @@
 
             this._field.onGameOver.add((result) => {
                 this._resetButton.empty();
-                this.addImage(this._resetButton, result ? 'Won' : 'Lost');
+                App.addImage(this._resetButton, result ? 'Won' : 'Lost');
                 this._cells.forEach((item) => { item.reveal(result) });
             });
 
             this._field.onGameStart.add(() => {
                 this._resetButton.empty();
-                this.addImage(this._resetButton, 'Started');
+                App.addImage(this._resetButton, 'Started');
             });
 
             this._field.onElapsedTime.add((value) => {
