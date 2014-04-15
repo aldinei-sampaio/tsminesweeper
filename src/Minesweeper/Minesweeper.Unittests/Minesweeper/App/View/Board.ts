@@ -96,7 +96,7 @@
         }
 
         private updateFlagCount(): void {
-            this.showDisplay(this._headerFlagCountPanel, this._field.remainingFlags);
+            this.showDisplay(this._headerFlagCountPanel, this._field.remainingFlags, 'MineLabel');
         }
 
         private drawHeader(table: JQuery): void {
@@ -151,7 +151,7 @@
                 .appendTo(td)
                 .addClass('headerDisplay')
                 .attr('style', 'margin-left:auto');
-            this.showDisplay(this._headerTimerPanel, 0);
+            this.showDisplay(this._headerTimerPanel, 0, 'ClockLabel');
         }
 
         private drawResetPanel(td: JQuery): void {
@@ -163,8 +163,10 @@
             this._resetButton.bind('click', () => { this.reset() });
         }
 
-        private showDisplay(panel: JQuery, value: number): void {
+        private showDisplay(panel: JQuery, value: number, labelImage : string): void {
             panel.empty();
+
+            this.addImage(panel, labelImage);
 
             var digits = value.toString().split('');
             var startDigit = digits.length - 3;
@@ -226,7 +228,7 @@
             });
 
             this._field.onElapsedTime.add((value) => {
-                this.showDisplay(this._headerTimerPanel, value);
+                this.showDisplay(this._headerTimerPanel, value, 'ClockLabel');
             });
 
             this.drawField();

@@ -18,6 +18,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="app.css" />
+    <Content Include="app.full.js" />
     <Content Include="Content\themes\base\images\animated-overlay.gif" />
     <Content Include="Content\themes\base\images\ui-bg_flat_0_aaaaaa_40x100.png" />
     <Content Include="Content\themes\base\images\ui-bg_flat_75_ffffff_40x100.png" />
@@ -88,6 +89,7 @@
     <Content Include="Images\6.png" />
     <Content Include="Images\7.png" />
     <Content Include="Images\8.png" />
+    <Content Include="Images\ClockLabel.png" />
     <Content Include="Images\Mine.png" />
     <Content Include="Images\Counter0.png" />
     <Content Include="Images\Counter1.png" />
@@ -101,6 +103,7 @@
     <Content Include="Images\Counter9.png" />
     <Content Include="Images\Lost.png" />
     <Content Include="Images\Flag.png" />
+    <Content Include="Images\MineLabel.png" />
     <Content Include="Images\Ready.png" />
     <Content Include="Images\Started.png" />
     <Content Include="Images\Unknown.png" />
@@ -110,6 +113,7 @@
     <Content Include="packages.config" />
     <None Include="aldinei - FTP.pubxml" />
     <None Include="aldinei - Web Deploy.pubxml" />
+    <Content Include="app.full.js.map" />
     <None Include="Scripts\jquery-2.1.0.intellisense.js" />
     <Content Include="Scripts\jquery-2.1.0.js" />
     <Content Include="Scripts\jquery-2.1.0.min.js" />

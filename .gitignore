@@ -160,3 +160,10 @@ $RECYCLE.BIN/
 /src/Minesweeper/Minesweeper.Unittests/Minesweeper/app.full.js
 /src/Minesweeper/Minesweeper.Unittests/Minesweeper/app.full.js.map
 /src/Minesweeper/Minesweeper.Unittests/Tests/tsUnit.js.map
+/src/Minesweeper/Minesweeper.Unittests/Minesweeper/App/View/ImageLoader.js
+/src/Minesweeper/Minesweeper.Unittests/Minesweeper/App/app.js
+/src/Minesweeper/Minesweeper.Unittests/Minesweeper/App/Model/Event.js
+/src/Minesweeper/Minesweeper.Unittests/Minesweeper/App/Model/Field.js
+/src/Minesweeper/Minesweeper.Unittests/Minesweeper/App/Model/Square.js
+/src/Minesweeper/Minesweeper.Unittests/Minesweeper/App/View/Board.js
+/src/Minesweeper/Minesweeper.Unittests/Minesweeper/App/View/Cell.js
