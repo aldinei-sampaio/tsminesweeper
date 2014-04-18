@@ -21,6 +21,7 @@
         private _mineCount = 0;
         private _elapsedTime = 0;
         private _timerId: number;
+        private _putMinesLater = 0;
 
         public onGameOver: IMessageEvent<boolean> = new TypedEvent();
         public onGameStart: IEvent = new TypedEvent();
@@ -28,7 +29,7 @@
 
         constructor(rows: number, cols: number) {
             if (rows <= 0 || cols <= 0) {
-                throw ('rows e cols precisam ser maiores que zero');
+                throw new Error('rows e cols precisam ser maiores que zero');
             }
 
             this._rows = rows;
@@ -75,7 +76,7 @@
 
         public getSquare(row: number, col: number): Square {
             if (row < this._minRow || row > this._maxRow || col < this._minCol || col > this._maxCol) {
-                throw ('Valor de row ou col inválido');
+                throw new Error('Valor de row ou col inválido');
             }
             return this._squares[row][col];
         }
@@ -84,18 +85,35 @@
             return this._squareCount - this._mineCount;
         }
 
-        public putMines(mineCount: number): void {
-            if (mineCount > this.openableCount()) {
-                throw ('Não há espaço suficiente para o número de minas informado.');
+        public putMines(mineCount: number, onFirstOpening: boolean = false): void {
+            if (mineCount + this._mineCount > this.openableCount() - 9) {
+                throw new Error('Não há espaço suficiente para o número de minas informado.');
             }
+            if (onFirstOpening) {
+                this._putMinesLater += mineCount;
+            } else {
+                this.putAllMines(mineCount);
+            }
+        }
+
+        private putAllMines(mineCount: number, exceptSquare?: Square): void {
+            var validateSquare: (square: Square) => boolean;
+
+            if (exceptSquare) {
+                validateSquare = (square) => !square.hasMine && !this.areNeighbors(exceptSquare, square);
+            } else {
+                validateSquare = (square) => !square.hasMine;
+            }
+
             for (var n = 1; n <= mineCount; n++) {
-                var square: Square;                
+                var square: Square;
                 do {
                     var cellNumber = Math.floor(Math.random() * this._rows * this._cols);
                     var row = Math.floor(cellNumber / this._cols);
                     var col = cellNumber % this._cols;
+
                     square = this.getSquare(row, col);
-                } while (square.hasMine);
+                } while (!validateSquare(square));
                 this.putMine(square);
             }
         }
@@ -108,6 +126,13 @@
             square.hasMine = true;
             this._mineCount++;
             this.forEachInVicinity(square, (item) => item.displayNumber++);
+        }
+
+        private areNeighbors(s1: Square, s2:Square): boolean {
+            return s2.row >= s1.row - 1 &&
+                s2.row <= s1.row + 1 &&
+                s2.col >= s1.col - 1 &&
+                s2.col <= s1.col + 1;
         }
 
         private forEachInVicinity(item: Square, callbackfn: (item: Square) => void) {
@@ -141,6 +166,11 @@
         }
 
         public open(square: Square): void {
+            if (this._putMinesLater > 0) {
+                this.putAllMines(this._putMinesLater, square);
+                this._putMinesLater = 0;
+            }
+
             this.registerStart();
 
             square.open();

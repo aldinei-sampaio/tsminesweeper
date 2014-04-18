@@ -17,6 +17,7 @@
         private _optionsPanel: JQuery;
         private _headerFlagCountPanel: JQuery;
         private _headerTimerPanel: JQuery;
+        private _putMinesAfeterFirstOpen = true;
 
         constructor(container: JQuery) {
             this._container = container;
@@ -71,11 +72,20 @@
                     op3.attr('checked', 'checked');
                 }
                 $('<label for="options_board_size_3">Experiente</label>').appendTo(p);
+
+                
+                var p = $('<p/>').appendTo(this._optionsPanel);
+                var chk = $('<input id="empty_square_on_first_click" type="checkbox" value="1" />').appendTo(p);
+                if (this._putMinesAfeterFirstOpen) {
+                    chk.attr('checked', 'checked');
+                }
+                $('<label for="empty_square_on_first_click">Impedir fim de jogo no primeiro clique</label>').appendTo(p);
             }
 
             this._optionsPanel.dialog(
                 {
                     modal: true,
+                    width: 350,
                     buttons: {
                         "OK": () => {
                             this._optionsPanel.dialog("close");
@@ -86,6 +96,7 @@
                             } else {
                                 this._gameMode = GameMode.Expert;
                             }
+                            this._putMinesAfeterFirstOpen = $('#empty_square_on_first_click').is(':checked');
                             this.reset();
                         },
                         "Cancelar": () => {
@@ -187,18 +198,21 @@
             switch (this._gameMode) {
                 case GameMode.Begginner:
                     this._field = new Model.Field(9, 9);
-                    this._field.putMines(10);
+                    this._field.putMines(10, this._putMinesAfeterFirstOpen);
                     break;
                 case GameMode.Intermediate:
                     this._field = new Model.Field(16, 16);
-                    this._field.putMines(40);
+                    this._field.putMines(40, this._putMinesAfeterFirstOpen);
                     break;
                 case GameMode.Expert:
                     this._field = new Model.Field(16, 30);
-                    this._field.putMines(99);
+                    this._field.putMines(99, this._putMinesAfeterFirstOpen);
                     break;
                 case GameMode.Custom:
-                    this._field = new Model.Field(6, 6);
+                    this._field = new Model.Field(5, 5);
+                    this._field.putMines(16, true);
+
+                    /*
                     this._field.putMine(this._field.getSquare(0, 3));
                     this._field.putMine(this._field.getSquare(1, 5));
                     this._field.putMine(this._field.getSquare(2, 0));
@@ -207,6 +221,7 @@
                     this._field.putMine(this._field.getSquare(5, 0));
                     this._field.putMine(this._field.getSquare(5, 1));
                     this._field.putMine(this._field.getSquare(5, 3));
+                    */
                     break;
                 default:
                     throw ('Gamemode não definido');
