@@ -18,34 +18,52 @@
         private _headerFlagCountPanel: JQuery;
         private _headerTimerPanel: JQuery;
         private _putMinesAfeterFirstOpen = true;
+        private _tipButton: JQuery;
 
         constructor(container: JQuery) {
             this._container = container;
         }
 
-        private drawField(): void {
-            if (this._cells) {
-                this._cells.forEach((item) => { item.onClick.remove(); });
+
+        private drawFooter(table: JQuery): void {
+            if (this._tipButton) {
+                this._tipButton.unbind();
             }
-            this._cells = [];
-            this._container.empty();
-
-            this.drawOptionsButton();
-
-            var table = $('<table/>').appendTo(this._container).addClass('fieldTable');
-
-            this.drawHeader(table);
-            this.drawCells(table);
-        }
-
-        private drawOptionsButton(): void {
             if (this._optionsButton) {
                 this._optionsButton.unbind();
             }
-            this._optionsButton = $('<button/>')
-                .appendTo(this._container)
-                .text('Opções...')
-                .bind('click', () => this.showOptionsDialog());
+
+            var panel = $('<div/>').appendTo($('<td/>').appendTo($('<tr/>').appendTo(table)));
+            panel.addClass('footerPanel');
+
+            var panelTable = $('<table/>')
+                .appendTo(panel)
+                .attr('cellspacing', '0')
+                .attr('cellpadding', '0')
+                .attr('style', 'width:100%');
+
+            var tr = $('<tr/>').appendTo(panelTable);
+            var td = $('<td/>').appendTo(tr);
+            td.attr('style', 'text-align:left');
+
+            this._tipButton = $('<button/>').appendTo(td);
+            App.addImage(this._tipButton, 'Tip');
+            this._tipButton.bind('click', () => {
+                if (this._field.createTip()) {
+                    $('#tip').html('');
+                } else {
+                    $('#tip').html('Dica não disponível');
+                }
+            });
+
+            $('<span id="tip"/>').appendTo(td).addClass('tipMessage');
+
+            var td = $('<td/>').appendTo(tr);
+            td.attr('style', 'text-align:right');
+            td.attr('colspan', '2');
+            this._optionsButton = $('<button/>').appendTo(td);
+            App.addImage(this._optionsButton, 'Options');
+            this._optionsButton.bind('click', () => this.showOptionsDialog());
         }
 
         private showOptionsDialog(): void {
@@ -116,7 +134,6 @@
             }
 
             var td = $('<td/>').appendTo($('<tr/>').appendTo(table));
-            td.attr('colspan', this._field.colCount.toString());
 
             this._topPanel = $('<div/>').appendTo(td);
             this._topPanel.addClass('headerPanel');
@@ -135,8 +152,12 @@
         }
 
         private drawCells(table: JQuery): void {
+            var boardTable = $('<table/>').appendTo($('<td/>').appendTo($('<tr/>').appendTo(table)));
+            boardTable.addClass('fieldTable');
+            boardTable.attr('cellspacing', '0');
+            boardTable.attr('cellpadding', '0');
             for (var i = this._field.minRow; i <= this._field.maxRow; i++) {
-                var tr = $('<tr/>').appendTo(table);
+                var tr = $('<tr/>').appendTo(boardTable);
 
                 for (var j = this._field.minCol; j <= this._field.maxCol; j++) {
                     var td = $('<td/>').appendTo(tr).addClass('fieldCell');
@@ -194,6 +215,7 @@
             if (this._cells) {
                 this._cells.forEach((item) => item.dispose());
             }
+            this._cells = [];
 
             switch (this._gameMode) {
                 case GameMode.Begginner:
@@ -209,19 +231,14 @@
                     this._field.putMines(99, this._putMinesAfeterFirstOpen);
                     break;
                 case GameMode.Custom:
-                    this._field = new Model.Field(5, 5);
-                    this._field.putMines(16, true);
+                    this._field = new Model.Field(3, 3);
+                    //this._field.putMines(16, true);
 
-                    /*
-                    this._field.putMine(this._field.getSquare(0, 3));
-                    this._field.putMine(this._field.getSquare(1, 5));
-                    this._field.putMine(this._field.getSquare(2, 0));
-                    this._field.putMine(this._field.getSquare(3, 0));
-                    this._field.putMine(this._field.getSquare(4, 5));
-                    this._field.putMine(this._field.getSquare(5, 0));
-                    this._field.putMine(this._field.getSquare(5, 1));
-                    this._field.putMine(this._field.getSquare(5, 3));
-                    */
+                    
+                    this._field.putMine(this._field.getSquare(1, 1));
+                    this._field.putMine(this._field.getSquare(2, 1));
+                    this._field.putMine(this._field.getSquare(2, 2));
+                    
                     break;
                 default:
                     throw ('Gamemode não definido');
@@ -230,6 +247,7 @@
             this._field.onGameOver.add((result) => {
                 this._resetButton.empty();
                 App.addImage(this._resetButton, result ? 'Won' : 'Lost');
+                this._tipButton.prop("disabled", true);
                 this._cells.forEach((item) => { item.reveal(result) });
             });
 
@@ -242,7 +260,11 @@
                 this.showDisplay(this._headerTimerPanel, value, 'ClockLabel');
             });
 
-            this.drawField();
+            this._container.empty();
+            var table = $('<table/>').appendTo(this._container).addClass('mainTable').attr('cellspacing', 0).attr('cellpadding', 0);
+            this.drawHeader(table);
+            this.drawCells(table);
+            this.drawFooter(table);
         }
     }
 } 

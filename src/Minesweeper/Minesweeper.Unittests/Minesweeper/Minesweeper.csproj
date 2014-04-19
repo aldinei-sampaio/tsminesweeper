@@ -104,8 +104,19 @@
     <Content Include="Images\Lost.png" />
     <Content Include="Images\Flag.png" />
     <Content Include="Images\MineLabel.png" />
+    <Content Include="Images\NormalButtonDisabled.png" />
+    <Content Include="Images\NormalButtonHover.png" />
+    <Content Include="Images\NormalButtonPressed.png" />
+    <Content Include="Images\NormalButtonReady.png" />
+    <Content Include="Images\Options.png" />
     <Content Include="Images\Ready.png" />
     <Content Include="Images\Started.png" />
+    <Content Include="Images\Tip.png" />
+    <Content Include="Images\TipButtonDisabled.png" />
+    <Content Include="Images\TipButtonHover.png" />
+    <Content Include="Images\TipButtonPressed.png" />
+    <Content Include="Images\TipButtonReady.png" />
+    <Content Include="Images\TipGreen.png" />
     <Content Include="Images\Unknown.png" />
     <Content Include="Images\Won.png" />
     <Content Include="Images\WrongFlag.png" />
@@ -185,6 +196,7 @@
     <TypeScriptRemoveComments>true</TypeScriptRemoveComments>
     <TypeScriptSourceMap>false</TypeScriptSourceMap>
     <TypeScriptModuleKind>AMD</TypeScriptModuleKind>
+    <TypeScriptOutFile>app.full.js</TypeScriptOutFile>
   </PropertyGroup>
   <Import Project="$(VSToolsPath)\TypeScript\Microsoft.TypeScript.targets" Condition="Exists('$(VSToolsPath)\TypeScript\Microsoft.TypeScript.targets')" />
 </Project>

@@ -15,6 +15,17 @@
             this.draw();
         }
 
+        public dispose(): void {
+            this._container.unbind();
+            if (this._button) {
+                this._button.unbind();
+            }
+
+            this.onClick.remove();
+            this.onRightClick.remove();
+            this.onBothClick.remove();
+        }
+
         private draw(): void {
             this._container.unbind();
             if (this._square.isOpenned) {
@@ -43,12 +54,15 @@
         private showWrongFlag(): void {
             this._button.empty();
             App.addImage(this._button, 'WrongFlag');
-            this._button.prop("disabled", true);
         }
 
         private showOpennedSquare(isEnabled: boolean): void {
             var div = this.resetAndCreateDiv();
             var mines = this._square.displayNumber;
+
+            if (this._square.isTip) {
+                div.addClass('tip');
+            }
 
             if (this._square.hasMine) {
                 App.addImage(div, 'Mine');
@@ -86,21 +100,23 @@
 
         private showButton(isEnabled: boolean): void {
             var div = this.resetAndCreateDiv();
+            if (this._square.isTip) {
+                div.addClass('tip');
+            }
 
-            this._button = $('<button/>');
+            this._button = $('<a/>').appendTo(div).attr('href','javascript:void(0)');
             this._button.html('&nbsp;');
-            this._button.addClass('fieldButton');
             if (isEnabled) {
                 this._button.bind('click', (e) => this.processClick());
                 this._button.bind('mousedown', (e) => {
                     if (e.which == 3) {
                         this.onRightClick.trigger(this._square);
                     }
+                    e.preventDefault();
                 });
             } else {
                 this._button.prop("disabled", true);
             }
-            div.append(this._button);
         }
 
         private processClick(): void {
@@ -130,26 +146,15 @@
                 return;
             }
             if (this._square.hasMine) {
-                if (this._square.isFlagged) {
-                    this._button.prop("disabled", true);
-                } else if (showMinesAsFlags) {
-                    this.showFlag();
-                    this._button.prop("disabled", true);
-                } else {
+                if (!this._square.isFlagged && !showMinesAsFlags) {
                     this.showOpennedSquare(false);
+                    return;
                 }
             } else if (this._square.isFlagged) {
                 this.showWrongFlag();
-            } else {
-                this._button.prop("disabled", true);
             }
-        }
-
-        public dispose(): void {
-            this._container.unbind();
-            if (this._button) {
-                this._button.unbind();
-            }
+            this._button.attr("disabled", "disabled");
+            this._button.unbind();
         }
     }
 } 

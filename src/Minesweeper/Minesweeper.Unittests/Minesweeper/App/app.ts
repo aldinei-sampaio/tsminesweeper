@@ -6,7 +6,7 @@
 
 
 class App {
-    public static version = '0.1.4';
+    public static version = '0.1.5';
 
     public static addImage(container: JQuery, imageName: String): JQuery {
         return $('<img/>').attr('src', 'Images/' + imageName + '.png?' + App.version).appendTo(container);
@@ -21,7 +21,10 @@ class App {
             'Mine', 'Flag', 'Unknown', 'WrongFlag',
             'Counter0', 'Counter1', 'Counter2', 'Counter3', 'Counter4', 'Counter5', 'Counter6', 'Counter7', 'Counter8', 'Counter9',
             'Ready', 'Started', 'Won', 'Lost',
-            'MineLabel', 'ClockLabel'
+            'MineLabel', 'ClockLabel', 'Tip', 'Options',
+            'NormalButtonReady', 'NormalButtonHover', 'NormalButtonPressed', 'NormalButtonDisabled',
+            'TipButtonReady', 'TipButtonHover', 'TipButtonPressed', 'TipButtonDisabled',
+            'TipGreen'
         ];
         loader.onLoaded.add(() => this.showBoard(container));
         loader.load()

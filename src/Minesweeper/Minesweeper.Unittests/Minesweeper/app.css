@@ -22,34 +22,91 @@ td {
     text-align:center;
     vertical-align: middle;
     padding:0;
-}
-
-.fieldCell {
-    width:20px;
-    height:20px;
-    font-size:10pt;
-    font-weight:bold;
-    border:1px solid #F0F0F0;
-    text-align:center;
-    vertical-align:middle;
-}
-
-.exploded {
-    background:red;
-}
-
-.fieldButton {
-    width:100%;
-    height:100%;
-    text-align:center;
-    vertical-align:middle;
-    padding:0;
     margin:0;
 }
 
+.mainTable {
+    min-width: 200px;
+    border-bottom: 1px solid #C0C0C0;
+}
+
+.mainTable td {
+    border-left: 1px solid #C0C0C0;
+    border-right: 1px solid #C0C0C0;
+    border-top: 1px solid #C0C0C0;
+}
+
+.mainTable td table td {
+    border:none;
+    padding:0;
+}
+
+.fieldTable {
+    border-bottom: 1px solid #E0E0E0;
+    border-right: 1px solid #E0E0E0;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+.fieldCell {
+    width: 20px;
+    height: 20px;
+    font-size: 10pt;
+    font-weight: bold;
+    border-top: 1px solid #E0E0E0;
+    border-left: 1px solid #E0E0E0;
+    border-bottom: none;
+    border-right: none;
+    text-align: center;
+    vertical-align: middle;
+    padding: 1px;
+}
+
+.fieldCell a { 
+    display: block; 
+    width: 20px; 
+    height: 20px; 
+    text-decoration: none;
+    background: url(Images/NormalButtonReady.png?0.1.5) no-repeat top; 
+}
+
+.fieldCell a:hover {
+    background: url(Images/NormalButtonHover.png?0.1.5) no-repeat top; 
+}
+
+.fieldCell a:active {
+    background: url(Images/NormalButtonPressed.png?0.1.5) no-repeat top; 
+}
+
+.fieldCell a[disabled=disabled] {
+    background: url(Images/NormalButtonDisabled.png?0.1.5) no-repeat top; 
+}
+
+.exploded {
+    background-color:red;
+}
+
+.tip {
+    background-image:url(Images/TipGreen.png?0.1.5);
+}
+
+.tip a {
+    background: url(Images/TipButtonReady.png?0.1.5) no-repeat top; 
+}
+
+.tip a:hover {
+    background: url(Images/TipButtonHover.png?0.1.5) no-repeat top; 
+}
+
+.tip a:active {
+    background: url(Images/TipButtonPressed.png?0.1.5) no-repeat top; 
+}
+
 .headerPanel {
-    width:100%;
     text-align:center;
+    background-color:#D0D0D0;
+    padding: 3px;
 }
 
 .headerDisplay {
@@ -76,3 +133,15 @@ td {
     height: 180px;
     border: 1px solid black;
 }
+
+.footerPanel {
+    background-color:#D0D0D0;
+    padding: 3px;
+}
+
+.tipMessage {
+    font-size: 8pt;
+    color: darkred;
+    padding: 3px;
+}
+

@@ -6,6 +6,11 @@
         Lost
     }
 
+    interface ICoordinates {
+        row: number;
+        col: number;
+    }
+
     export class Field {
         private _squares: Square[][];
         private _rows = 0;
@@ -51,7 +56,7 @@
         }
 
         public get remainingFlags(): number {
-            return (this._mineCount - this._flaggedCount);
+            return (this._mineCount + this._putMinesLater - this._flaggedCount);
         }
 
         public get minRow(): number {
@@ -108,14 +113,21 @@
             for (var n = 1; n <= mineCount; n++) {
                 var square: Square;
                 do {
-                    var cellNumber = Math.floor(Math.random() * this._rows * this._cols);
-                    var row = Math.floor(cellNumber / this._cols);
-                    var col = cellNumber % this._cols;
-
-                    square = this.getSquare(row, col);
+                    var coords = this.getRandomCoordinates();
+                    square = this.getSquare(coords.row, coords.col);
                 } while (!validateSquare(square));
                 this.putMine(square);
             }
+        }
+
+        private getRandomCoordinates(): ICoordinates {
+            return this.getCoordinatesFromCellNumber(Math.floor(Math.random() * this._rows * this._cols));
+        }
+
+        private getCoordinatesFromCellNumber(cellNumber: number): ICoordinates {
+            var row = Math.floor(cellNumber / this._cols);
+            var col = cellNumber % this._cols;
+            return { row: row, col: col };
         }
 
         public putMine(square: Square): void {
@@ -125,7 +137,7 @@
 
             square.hasMine = true;
             this._mineCount++;
-            this.forEachInVicinity(square, (item) => item.displayNumber++);
+            this.forEachInVicinity(square, (item) => { item.displayNumber++; return false; } );
         }
 
         private areNeighbors(s1: Square, s2:Square): boolean {
@@ -135,11 +147,10 @@
                 s2.col <= s1.col + 1;
         }
 
-        private forEachInVicinity(item: Square, callbackfn: (item: Square) => void) {
+        private forEachInVicinity(item: Square, callbackfn: (item: Square) => boolean) {
             for (var i = Math.max(item.row - 1, this._minRow); i <= Math.min(item.row + 1, this._maxRow); i++) {
                 for (var j = Math.max(item.col - 1, this._minCol); j <= Math.min(item.col + 1, this._maxCol); j++) {
-                    callbackfn(this.getSquare(i, j));
-                    if (this._state == GameState.Won || this._state == GameState.Lost) {
+                    if (callbackfn(this.getSquare(i, j))) {
                         return;
                     }
                 }
@@ -204,6 +215,7 @@
                     this._openedCount++;
                     this.openAllNeighbors(item);      
                 }
+                return (this._state == GameState.Won || this._state == GameState.Lost);
             });
         }
 
@@ -216,6 +228,7 @@
                         this.openAllNeighbors(item);
                     }
                 }
+                return (this._state == GameState.Won || this._state == GameState.Lost);
             });
         }
 
@@ -242,6 +255,7 @@
                 if (!item.isOpenned && item.isFlagged) {
                     flagsFound++;
                 }
+                return false;
             });
             if (flagsFound < square.displayNumber) {
                 return;
@@ -250,6 +264,7 @@
                 if (!item.isOpenned && !item.isFlagged) {
                     this.open(item);
                 }
+                return false;
             });
         }
 
@@ -264,6 +279,95 @@
             }
             this.registerStart();
             square.toggleFlag();
+        }
+
+        public createTip(): Square {
+            if (this._openedCount == 0) {
+                return undefined;
+            }
+
+            var startingPoing = this.getRandomCoordinates();
+            var square = this.traverseFrom(this.getRandomCoordinates(), (s) => this.checkIfCanBeATip(s));
+
+            if (square) {
+                square.isTip = true;
+                return square;
+            } else {
+                return undefined;
+            }
+        }
+
+        private checkIfCanBeATip(square: Square): Square {
+            if (!square.isOpenned) {
+                return undefined;
+            }
+
+            var flagCount = 0;
+            var closedNeighbors = 0;
+            var candidate: Square;
+            this.forEachInVicinity(square, (square) => {
+                if (!square.isOpenned) {
+                    if (square.isFlagged) {
+                        flagCount++;
+                    } else if (!square.isTip) {
+                        closedNeighbors++;
+                        candidate = square;
+                    }
+                }
+                return false;
+            });
+
+            if (closedNeighbors === 0) {
+                return undefined;
+            }
+
+            if (square.displayNumber === flagCount) {
+                return candidate;
+            }
+
+            return undefined;
+        }
+
+        private traverseFrom(coords: ICoordinates, callback: (square: Square) => Square): Square {
+            var maxCellNumber = this._rows * this._cols - 1;
+            var coordsCellNumber = this._cols * coords.row + coords.col;
+
+            var n = coordsCellNumber;
+            do {
+                var coords = this.getCoordinatesFromCellNumber(n);
+                var square = callback(this.getSquare(coords.row, coords.col));
+                if (square) {
+                    return square;
+                }
+                n++;
+                if (n > maxCellNumber) {
+                    n = 0;
+                }
+            } while (n !== coordsCellNumber);
+            return undefined;
+        }
+
+        private checkForBombs(square: Square): void {
+            if (!square.isOpenned) {
+                return;
+            }
+            var closedCount = 0;
+            var tip: Square;
+            this.forEachInVicinity(square, (item) => {
+                if (!item.isOpenned) {
+                    tip = item;
+                    closedCount++;
+                    if (closedCount > square.displayNumber) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+            if (closedCount > square.displayNumber) {
+                //return tip;
+            } else {
+                return undefined;
+            }
         }
     }
 };

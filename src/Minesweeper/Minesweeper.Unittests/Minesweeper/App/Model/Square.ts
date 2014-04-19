@@ -5,6 +5,7 @@
         private _isOpenned = false;
         private _isFlagged = false;
         private _isUnknown = false;
+        private _isTip = false;
 
         public onUpdate: IEvent = new TypedEvent();
 
@@ -54,6 +55,17 @@
                 this._isFlagged = true;
             }
             this.onUpdate.trigger();
+        }
+
+        public get isTip(): boolean {
+            return this._isTip;
+        }
+
+        public set isTip(value: boolean) {
+            if (this._isTip !== value) {
+                this._isTip = value;
+                this.onUpdate.trigger();
+            }
         }
     }
 }; 
