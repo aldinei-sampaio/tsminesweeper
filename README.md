@@ -12,6 +12,11 @@ Releases
 
 O jogo está disponível online em http://aldinei.azurewebsites.net/
 
+Versão 0.1.5 (18/04/2014)
+-------------------------
+- Issue #3 (novidade): Incluída opção "Dica" (botão com o ícone da lâmpada, que sugere um quadro que pode ser aberto com segurança, a partir das bombas que tiverem sido marcadas com bandeiras)
+- Issue #3 (melhoria): Revisto o desenho geral do tabuleiro e das opções
+
 Versão 0.1.4 (17/04/2014)
 -------------------------
 - Issue #2 (novidade): Incluída opção "Impedir fim de jogo no primeiro clique", ativada por padrão
