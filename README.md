@@ -12,6 +12,13 @@ Releases
 
 O jogo está disponível online em http://aldinei.azurewebsites.net/
 
+Versão 0.1.7 (19/04/2014)
+-------------------------
+- Issue #1 (novidade): Incluída opção "Customizado" na janela de opções. Essa opção permite ao usuário escolher o tamanho do tabuleiro e o número de minas
+- Issue #5 (melhoria): A oção "Dica" agora é capaz de fazer dois tipos de sugestões: verde ou vermelha; sugestões verdes indicam que o quadro pode ser aberto com segurança e sugestões vermelhas indicam que o quadro contém uma mina
+- As opções escolhidas pelo usuário agora são salvas na localStorage
+- Incluído checkbox "Exibir opção de dicas" na janela de opções; isso permite ativar ou desativar o botão "Dica"
+
 Versão 0.1.5 (18/04/2014)
 -------------------------
 - Issue #3 (novidade): Incluída opção "Dica" (botão com o ícone da lâmpada, que sugere um quadro que pode ser aberto com segurança, a partir das bombas que tiverem sido marcadas com bandeiras)
