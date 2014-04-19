@@ -32,10 +32,10 @@
         }
 
         td {
-            text-align:center;
+            text-align: center;
             vertical-align: middle;
-            padding:0;
-            margin:0;
+            padding: 0;
+            margin: 0;
         }
 
         .mainTable {
@@ -50,8 +50,8 @@
         }
 
         .mainTable td table td {
-            border:none;
-            padding:0;
+            border: none;
+            padding: 0;
         }
 
         .fieldTable {
@@ -117,8 +117,8 @@
         }
 
         .headerPanel {
-            text-align:center;
-            background-color:#D0D0D0;
+            text-align: center;
+            background-color: #D0D0D0;
             padding: 3px;
         }
 
@@ -142,9 +142,31 @@
         .optionsPanel {
             padding: 5px;
             background: #D0D0D0;
-            width: 200px;
+            width: 350px;
             height: 180px;
             border: 1px solid black;
+            font-size: 9pt;
+        }
+
+        .optionsPanel table {
+            margin-bottom: 10px;
+        }
+
+        .optionsPanel td {
+            width:200px;
+        }
+
+        .optionsPanel input[type=text] {
+            width: 25px;    
+        }
+
+        .optionsPanel p {
+            margin: 0;
+            padding: 0;
+        }
+
+        .invalid {
+            background-color:#fb8d8d;
         }
 
         .footerPanel {

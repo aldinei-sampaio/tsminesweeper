@@ -139,6 +139,8 @@
     <TypeScriptCompile Include="App\Model\Field.ts" />
     <TypeScriptCompile Include="App\View\Cell.ts" />
     <TypeScriptCompile Include="App\View\Board.ts" />
+    <TypeScriptCompile Include="App\View\OptionsDialog.ts" />
+    <TypeScriptCompile Include="App\View\UserOptions.ts" />
     <TypeScriptCompile Include="Scripts\typings\jquery.ui.layout\jquery.ui.layout.d.ts" />
     <TypeScriptCompile Include="Scripts\typings\jqueryui\jqueryui.d.ts" />
     <TypeScriptCompile Include="Scripts\typings\jquery\jquery.d.ts" />

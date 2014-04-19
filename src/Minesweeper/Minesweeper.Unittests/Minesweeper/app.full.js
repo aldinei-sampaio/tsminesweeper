@@ -496,6 +496,287 @@ var Minesweeper;
 ;
 var Minesweeper;
 (function (Minesweeper) {
+    (function (Model) {
+        var Square = (function () {
+            function Square(row, col) {
+                this._row = 0;
+                this._col = 0;
+                this._isOpenned = false;
+                this._isFlagged = false;
+                this._isUnknown = false;
+                this._isTip = false;
+                this.onUpdate = new Model.TypedEvent();
+                this.hasMine = false;
+                this.displayNumber = 0;
+                this._row = row;
+                this._col = col;
+            }
+            Object.defineProperty(Square.prototype, "isFlagged", {
+                get: function () {
+                    return this._isFlagged;
+                },
+                enumerable: true,
+                configurable: true
+            });
+
+            Object.defineProperty(Square.prototype, "isUnknown", {
+                get: function () {
+                    return this._isUnknown;
+                },
+                enumerable: true,
+                configurable: true
+            });
+
+            Square.prototype.open = function () {
+                if (this._isOpenned) {
+                    return;
+                }
+                this._isOpenned = true;
+                this.onUpdate.trigger();
+            };
+
+            Object.defineProperty(Square.prototype, "isOpenned", {
+                get: function () {
+                    return this._isOpenned;
+                },
+                enumerable: true,
+                configurable: true
+            });
+
+            Object.defineProperty(Square.prototype, "row", {
+                get: function () {
+                    return this._row;
+                },
+                enumerable: true,
+                configurable: true
+            });
+
+            Object.defineProperty(Square.prototype, "col", {
+                get: function () {
+                    return this._col;
+                },
+                enumerable: true,
+                configurable: true
+            });
+
+            Square.prototype.toggleFlag = function () {
+                if (this._isFlagged) {
+                    this._isFlagged = false;
+                    this._isUnknown = true;
+                } else if (this._isUnknown) {
+                    this._isUnknown = false;
+                } else {
+                    this._isFlagged = true;
+                }
+                this.onUpdate.trigger();
+            };
+
+            Object.defineProperty(Square.prototype, "isTip", {
+                get: function () {
+                    return this._isTip;
+                },
+                set: function (value) {
+                    if (this._isTip !== value) {
+                        this._isTip = value;
+                        this.onUpdate.trigger();
+                    }
+                },
+                enumerable: true,
+                configurable: true
+            });
+
+            return Square;
+        })();
+        Model.Square = Square;
+    })(Minesweeper.Model || (Minesweeper.Model = {}));
+    var Model = Minesweeper.Model;
+})(Minesweeper || (Minesweeper = {}));
+;
+var Minesweeper;
+(function (Minesweeper) {
+    (function (View) {
+        var Board = (function () {
+            function Board(container) {
+                var _this = this;
+                this._options = View.UserOptions.load();
+                this._optionsDialog = new View.OptionsDialog(this._options, function () {
+                    _this._options.save();
+                    _this.reset();
+                });
+                this._container = container;
+            }
+            Board.prototype.drawFooter = function (table) {
+                var _this = this;
+                if (this._tipButton) {
+                    this._tipButton.unbind();
+                }
+                if (this._optionsButton) {
+                    this._optionsButton.unbind();
+                }
+
+                var panel = $('<div/>').appendTo($('<td/>').appendTo($('<tr/>').appendTo(table)));
+                panel.addClass('footerPanel');
+
+                var panelTable = $('<table/>').appendTo(panel).attr('cellspacing', '0').attr('cellpadding', '0').attr('style', 'width:100%');
+
+                var tr = $('<tr/>').appendTo(panelTable);
+                var td = $('<td/>').appendTo(tr);
+                td.attr('style', 'text-align:left');
+
+                this._tipButton = $('<button/>').appendTo(td);
+                App.addImage(this._tipButton, 'Tip');
+                this._tipButton.bind('click', function () {
+                    if (_this._field.createTip()) {
+                        $('#tip').html('');
+                    } else {
+                        $('#tip').html('Dica não disponível');
+                    }
+                });
+
+                $('<span id="tip"/>').appendTo(td).addClass('tipMessage');
+
+                var td = $('<td/>').appendTo(tr);
+                td.attr('style', 'text-align:right');
+                td.attr('colspan', '2');
+                this._optionsButton = $('<button/>').appendTo(td);
+                App.addImage(this._optionsButton, 'Options');
+                this._optionsButton.bind('click', function () {
+                    return _this._optionsDialog.show();
+                });
+            };
+
+            Board.prototype.updateFlagCount = function () {
+                this.showDisplay(this._headerFlagCountPanel, this._field.remainingFlags, 'MineLabel');
+            };
+
+            Board.prototype.drawHeader = function (table) {
+                if (this._resetButton) {
+                    this._resetButton.unbind();
+                }
+
+                var td = $('<td/>').appendTo($('<tr/>').appendTo(table));
+
+                this._topPanel = $('<div/>').appendTo(td);
+                this._topPanel.addClass('headerPanel');
+
+                var panelTable = $('<table/>').appendTo(this._topPanel).attr('cellspacing', '0').attr('cellpadding', '0').attr('style', 'width:100%');
+
+                var panelTr = $('<tr/>').appendTo(panelTable);
+
+                this.drawFlagDisplay($('<td/>').appendTo(panelTr));
+                this.drawResetPanel($('<td/>').appendTo(panelTr));
+                this.drawTimerDisplay($('<td/>').appendTo(panelTr));
+            };
+
+            Board.prototype.drawCells = function (table) {
+                var _this = this;
+                var boardTable = $('<table/>').appendTo($('<td/>').appendTo($('<tr/>').appendTo(table)));
+                boardTable.addClass('fieldTable');
+                boardTable.attr('cellspacing', '0');
+                boardTable.attr('cellpadding', '0');
+                for (var i = this._field.minRow; i <= this._field.maxRow; i++) {
+                    var tr = $('<tr/>').appendTo(boardTable);
+
+                    for (var j = this._field.minCol; j <= this._field.maxCol; j++) {
+                        var td = $('<td/>').appendTo(tr).addClass('fieldCell');
+
+                        var cell = new View.Cell(td, this._field.getSquare(i, j));
+                        cell.onClick.add(function (square) {
+                            return _this._field.open(square);
+                        });
+                        cell.onBothClick.add(function (square) {
+                            return _this._field.openNeighborhood(square);
+                        });
+                        cell.onRightClick.add(function (square) {
+                            _this._field.flag(square);
+                            _this.updateFlagCount();
+                        });
+                        this._cells.push(cell);
+                    }
+                }
+            };
+
+            Board.prototype.drawFlagDisplay = function (td) {
+                this._headerFlagCountPanel = $('<div/>').appendTo(td).addClass('headerDisplay');
+                this.updateFlagCount();
+            };
+
+            Board.prototype.drawTimerDisplay = function (td) {
+                this._headerTimerPanel = $('<div/>').appendTo(td).addClass('headerDisplay').attr('style', 'margin-left:auto');
+                this.showDisplay(this._headerTimerPanel, 0, 'ClockLabel');
+            };
+
+            Board.prototype.drawResetPanel = function (td) {
+                var _this = this;
+                var resetPanel = $('<div/>').appendTo(td).addClass('resetPanel');
+                this._resetButton = $('<button/>').appendTo(resetPanel);
+                App.addImage(this._resetButton, 'Ready');
+                this._resetButton.bind('click', function () {
+                    _this.reset();
+                });
+            };
+
+            Board.prototype.showDisplay = function (panel, value, labelImage) {
+                panel.empty();
+
+                App.addImage(panel, labelImage);
+
+                var digits = value.toString().split('');
+                var startDigit = digits.length - 3;
+                for (var n = digits.length - 3; n < digits.length; n++) {
+                    var imageName = n < 0 ? '0' : digits[n];
+                    App.addImage(panel, 'Counter' + imageName);
+                }
+            };
+
+            Board.prototype.reset = function () {
+                var _this = this;
+                if (this._field) {
+                    this._field.dispose();
+                }
+                if (this._cells) {
+                    this._cells.forEach(function (item) {
+                        return item.dispose();
+                    });
+                }
+                this._cells = [];
+
+                var options = this._options.getCurrentOptions();
+                this._field = new Minesweeper.Model.Field(options.rows, options.cols);
+                this._field.putMines(options.mines, this._options.putMinesAfterFirstOpen);
+
+                this._field.onGameOver.add(function (result) {
+                    _this._resetButton.empty();
+                    App.addImage(_this._resetButton, result ? 'Won' : 'Lost');
+                    _this._tipButton.prop("disabled", true);
+                    _this._cells.forEach(function (item) {
+                        item.reveal(result);
+                    });
+                });
+
+                this._field.onGameStart.add(function () {
+                    _this._resetButton.empty();
+                    App.addImage(_this._resetButton, 'Started');
+                });
+
+                this._field.onElapsedTime.add(function (value) {
+                    _this.showDisplay(_this._headerTimerPanel, value, 'ClockLabel');
+                });
+
+                this._container.empty();
+                var table = $('<table/>').appendTo(this._container).addClass('mainTable').attr('cellspacing', 0).attr('cellpadding', 0);
+                this.drawHeader(table);
+                this.drawCells(table);
+                this.drawFooter(table);
+            };
+            return Board;
+        })();
+        View.Board = Board;
+    })(Minesweeper.View || (Minesweeper.View = {}));
+    var View = Minesweeper.View;
+})(Minesweeper || (Minesweeper = {}));
+var Minesweeper;
+(function (Minesweeper) {
     (function (View) {
         var Cell = (function () {
             function Cell(container, square) {
@@ -662,370 +943,6 @@ var Minesweeper;
 var Minesweeper;
 (function (Minesweeper) {
     (function (View) {
-        var GameMode;
-        (function (GameMode) {
-            GameMode[GameMode["Begginner"] = 0] = "Begginner";
-            GameMode[GameMode["Intermediate"] = 1] = "Intermediate";
-            GameMode[GameMode["Expert"] = 2] = "Expert";
-            GameMode[GameMode["Custom"] = 3] = "Custom";
-        })(GameMode || (GameMode = {}));
-
-        var Board = (function () {
-            function Board(container) {
-                this._gameMode = 0 /* Begginner */;
-                this._putMinesAfeterFirstOpen = true;
-                this._container = container;
-            }
-            Board.prototype.drawFooter = function (table) {
-                var _this = this;
-                if (this._tipButton) {
-                    this._tipButton.unbind();
-                }
-                if (this._optionsButton) {
-                    this._optionsButton.unbind();
-                }
-
-                var panel = $('<div/>').appendTo($('<td/>').appendTo($('<tr/>').appendTo(table)));
-                panel.addClass('footerPanel');
-
-                var panelTable = $('<table/>').appendTo(panel).attr('cellspacing', '0').attr('cellpadding', '0').attr('style', 'width:100%');
-
-                var tr = $('<tr/>').appendTo(panelTable);
-                var td = $('<td/>').appendTo(tr);
-                td.attr('style', 'text-align:left');
-
-                this._tipButton = $('<button/>').appendTo(td);
-                App.addImage(this._tipButton, 'Tip');
-                this._tipButton.bind('click', function () {
-                    if (_this._field.createTip()) {
-                        $('#tip').html('');
-                    } else {
-                        $('#tip').html('Dica não disponível');
-                    }
-                });
-
-                $('<span id="tip"/>').appendTo(td).addClass('tipMessage');
-
-                var td = $('<td/>').appendTo(tr);
-                td.attr('style', 'text-align:right');
-                td.attr('colspan', '2');
-                this._optionsButton = $('<button/>').appendTo(td);
-                App.addImage(this._optionsButton, 'Options');
-                this._optionsButton.bind('click', function () {
-                    return _this.showOptionsDialog();
-                });
-            };
-
-            Board.prototype.showOptionsDialog = function () {
-                var _this = this;
-                if (this._optionsPanel === undefined) {
-                    this._optionsPanel = $('<div/>').attr('title', 'Opções').addClass('optionsPanel');
-
-                    var p = $('<p/>').appendTo(this._optionsPanel);
-                    var op1 = $('<input id="options_board_size_1" type="radio" name="options_board_size" value="1" />').appendTo(p);
-                    if (this._gameMode == 0 /* Begginner */) {
-                        op1.attr('checked', 'checked');
-                    }
-                    $('<label for="options_board_size_1">Iniciante</label>').appendTo(p);
-
-                    p = $('<p/>').appendTo(this._optionsPanel);
-                    var op2 = $('<input id="options_board_size_2" type="radio" name="options_board_size" value="2" />').appendTo(p);
-                    if (this._gameMode == 1 /* Intermediate */) {
-                        op2.attr('checked', 'checked');
-                    }
-                    $('<label for="options_board_size_2">Intermediário</label>').appendTo(p);
-
-                    var p = $('<p/>').appendTo(this._optionsPanel);
-                    var op3 = $('<input id="options_board_size_3" type="radio" name="options_board_size" value="3" />').appendTo(p);
-                    if (this._gameMode == 2 /* Expert */) {
-                        op3.attr('checked', 'checked');
-                    }
-                    $('<label for="options_board_size_3">Experiente</label>').appendTo(p);
-
-                    var p = $('<p/>').appendTo(this._optionsPanel);
-                    var chk = $('<input id="empty_square_on_first_click" type="checkbox" value="1" />').appendTo(p);
-                    if (this._putMinesAfeterFirstOpen) {
-                        chk.attr('checked', 'checked');
-                    }
-                    $('<label for="empty_square_on_first_click">Impedir fim de jogo no primeiro clique</label>').appendTo(p);
-                }
-
-                this._optionsPanel.dialog({
-                    modal: true,
-                    width: 350,
-                    buttons: {
-                        "OK": function () {
-                            _this._optionsPanel.dialog("close");
-                            if ($('#options_board_size_1').is(':checked')) {
-                                _this._gameMode = 0 /* Begginner */;
-                            } else if ($('#options_board_size_2').is(':checked')) {
-                                _this._gameMode = 1 /* Intermediate */;
-                            } else {
-                                _this._gameMode = 2 /* Expert */;
-                            }
-                            _this._putMinesAfeterFirstOpen = $('#empty_square_on_first_click').is(':checked');
-                            _this.reset();
-                        },
-                        "Cancelar": function () {
-                            _this._optionsPanel.dialog("close");
-                        }
-                    }
-                });
-            };
-
-            Board.prototype.updateFlagCount = function () {
-                this.showDisplay(this._headerFlagCountPanel, this._field.remainingFlags, 'MineLabel');
-            };
-
-            Board.prototype.drawHeader = function (table) {
-                if (this._resetButton) {
-                    this._resetButton.unbind();
-                }
-
-                var td = $('<td/>').appendTo($('<tr/>').appendTo(table));
-
-                this._topPanel = $('<div/>').appendTo(td);
-                this._topPanel.addClass('headerPanel');
-
-                var panelTable = $('<table/>').appendTo(this._topPanel).attr('cellspacing', '0').attr('cellpadding', '0').attr('style', 'width:100%');
-
-                var panelTr = $('<tr/>').appendTo(panelTable);
-
-                this.drawFlagDisplay($('<td/>').appendTo(panelTr));
-                this.drawResetPanel($('<td/>').appendTo(panelTr));
-                this.drawTimerDisplay($('<td/>').appendTo(panelTr));
-            };
-
-            Board.prototype.drawCells = function (table) {
-                var _this = this;
-                var boardTable = $('<table/>').appendTo($('<td/>').appendTo($('<tr/>').appendTo(table)));
-                boardTable.addClass('fieldTable');
-                boardTable.attr('cellspacing', '0');
-                boardTable.attr('cellpadding', '0');
-                for (var i = this._field.minRow; i <= this._field.maxRow; i++) {
-                    var tr = $('<tr/>').appendTo(boardTable);
-
-                    for (var j = this._field.minCol; j <= this._field.maxCol; j++) {
-                        var td = $('<td/>').appendTo(tr).addClass('fieldCell');
-
-                        var cell = new View.Cell(td, this._field.getSquare(i, j));
-                        cell.onClick.add(function (square) {
-                            return _this._field.open(square);
-                        });
-                        cell.onBothClick.add(function (square) {
-                            return _this._field.openNeighborhood(square);
-                        });
-                        cell.onRightClick.add(function (square) {
-                            _this._field.flag(square);
-                            _this.updateFlagCount();
-                        });
-                        this._cells.push(cell);
-                    }
-                }
-            };
-
-            Board.prototype.drawFlagDisplay = function (td) {
-                this._headerFlagCountPanel = $('<div/>').appendTo(td).addClass('headerDisplay');
-                this.updateFlagCount();
-            };
-
-            Board.prototype.drawTimerDisplay = function (td) {
-                this._headerTimerPanel = $('<div/>').appendTo(td).addClass('headerDisplay').attr('style', 'margin-left:auto');
-                this.showDisplay(this._headerTimerPanel, 0, 'ClockLabel');
-            };
-
-            Board.prototype.drawResetPanel = function (td) {
-                var _this = this;
-                var resetPanel = $('<div/>').appendTo(td).addClass('resetPanel');
-                this._resetButton = $('<button/>').appendTo(resetPanel);
-                App.addImage(this._resetButton, 'Ready');
-                this._resetButton.bind('click', function () {
-                    _this.reset();
-                });
-            };
-
-            Board.prototype.showDisplay = function (panel, value, labelImage) {
-                panel.empty();
-
-                App.addImage(panel, labelImage);
-
-                var digits = value.toString().split('');
-                var startDigit = digits.length - 3;
-                for (var n = digits.length - 3; n < digits.length; n++) {
-                    var imageName = n < 0 ? '0' : digits[n];
-                    App.addImage(panel, 'Counter' + imageName);
-                }
-            };
-
-            Board.prototype.reset = function () {
-                var _this = this;
-                if (this._field) {
-                    this._field.dispose();
-                }
-                if (this._cells) {
-                    this._cells.forEach(function (item) {
-                        return item.dispose();
-                    });
-                }
-                this._cells = [];
-
-                switch (this._gameMode) {
-                    case 0 /* Begginner */:
-                        this._field = new Minesweeper.Model.Field(9, 9);
-                        this._field.putMines(10, this._putMinesAfeterFirstOpen);
-                        break;
-                    case 1 /* Intermediate */:
-                        this._field = new Minesweeper.Model.Field(16, 16);
-                        this._field.putMines(40, this._putMinesAfeterFirstOpen);
-                        break;
-                    case 2 /* Expert */:
-                        this._field = new Minesweeper.Model.Field(16, 30);
-                        this._field.putMines(99, this._putMinesAfeterFirstOpen);
-                        break;
-                    case 3 /* Custom */:
-                        this._field = new Minesweeper.Model.Field(3, 3);
-
-                        //this._field.putMines(16, true);
-                        this._field.putMine(this._field.getSquare(1, 1));
-                        this._field.putMine(this._field.getSquare(2, 1));
-                        this._field.putMine(this._field.getSquare(2, 2));
-
-                        break;
-                    default:
-                        throw ('Gamemode não definido');
-                }
-
-                this._field.onGameOver.add(function (result) {
-                    _this._resetButton.empty();
-                    App.addImage(_this._resetButton, result ? 'Won' : 'Lost');
-                    _this._tipButton.prop("disabled", true);
-                    _this._cells.forEach(function (item) {
-                        item.reveal(result);
-                    });
-                });
-
-                this._field.onGameStart.add(function () {
-                    _this._resetButton.empty();
-                    App.addImage(_this._resetButton, 'Started');
-                });
-
-                this._field.onElapsedTime.add(function (value) {
-                    _this.showDisplay(_this._headerTimerPanel, value, 'ClockLabel');
-                });
-
-                this._container.empty();
-                var table = $('<table/>').appendTo(this._container).addClass('mainTable').attr('cellspacing', 0).attr('cellpadding', 0);
-                this.drawHeader(table);
-                this.drawCells(table);
-                this.drawFooter(table);
-            };
-            return Board;
-        })();
-        View.Board = Board;
-    })(Minesweeper.View || (Minesweeper.View = {}));
-    var View = Minesweeper.View;
-})(Minesweeper || (Minesweeper = {}));
-var Minesweeper;
-(function (Minesweeper) {
-    (function (Model) {
-        var Square = (function () {
-            function Square(row, col) {
-                this._row = 0;
-                this._col = 0;
-                this._isOpenned = false;
-                this._isFlagged = false;
-                this._isUnknown = false;
-                this._isTip = false;
-                this.onUpdate = new Model.TypedEvent();
-                this.hasMine = false;
-                this.displayNumber = 0;
-                this._row = row;
-                this._col = col;
-            }
-            Object.defineProperty(Square.prototype, "isFlagged", {
-                get: function () {
-                    return this._isFlagged;
-                },
-                enumerable: true,
-                configurable: true
-            });
-
-            Object.defineProperty(Square.prototype, "isUnknown", {
-                get: function () {
-                    return this._isUnknown;
-                },
-                enumerable: true,
-                configurable: true
-            });
-
-            Square.prototype.open = function () {
-                if (this._isOpenned) {
-                    return;
-                }
-                this._isOpenned = true;
-                this.onUpdate.trigger();
-            };
-
-            Object.defineProperty(Square.prototype, "isOpenned", {
-                get: function () {
-                    return this._isOpenned;
-                },
-                enumerable: true,
-                configurable: true
-            });
-
-            Object.defineProperty(Square.prototype, "row", {
-                get: function () {
-                    return this._row;
-                },
-                enumerable: true,
-                configurable: true
-            });
-
-            Object.defineProperty(Square.prototype, "col", {
-                get: function () {
-                    return this._col;
-                },
-                enumerable: true,
-                configurable: true
-            });
-
-            Square.prototype.toggleFlag = function () {
-                if (this._isFlagged) {
-                    this._isFlagged = false;
-                    this._isUnknown = true;
-                } else if (this._isUnknown) {
-                    this._isUnknown = false;
-                } else {
-                    this._isFlagged = true;
-                }
-                this.onUpdate.trigger();
-            };
-
-            Object.defineProperty(Square.prototype, "isTip", {
-                get: function () {
-                    return this._isTip;
-                },
-                set: function (value) {
-                    if (this._isTip !== value) {
-                        this._isTip = value;
-                        this.onUpdate.trigger();
-                    }
-                },
-                enumerable: true,
-                configurable: true
-            });
-
-            return Square;
-        })();
-        Model.Square = Square;
-    })(Minesweeper.Model || (Minesweeper.Model = {}));
-    var Model = Minesweeper.Model;
-})(Minesweeper || (Minesweeper = {}));
-;
-var Minesweeper;
-(function (Minesweeper) {
-    (function (View) {
         var ImageLoader = (function () {
             function ImageLoader() {
                 this.imageList = [];
@@ -1048,6 +965,292 @@ var Minesweeper;
             return ImageLoader;
         })();
         View.ImageLoader = ImageLoader;
+    })(Minesweeper.View || (Minesweeper.View = {}));
+    var View = Minesweeper.View;
+})(Minesweeper || (Minesweeper = {}));
+var Minesweeper;
+(function (Minesweeper) {
+    (function (View) {
+        var OptionsDialog = (function () {
+            function OptionsDialog(userOptions, callback) {
+                this.userOptions = userOptions;
+                this.callback = callback;
+            }
+            OptionsDialog.prototype.createGameModeRadioButton = function (container, value, id, name) {
+                var _this = this;
+                var p = $('<p/>').appendTo(container);
+                var op1 = $('<input id="' + id + '" type="radio" name="options_board_size" value="' + value + '" />').appendTo(p);
+                if (this.userOptions.gameMode === value) {
+                    op1.attr('checked', 'checked');
+                }
+                $('<label for="' + id + '">' + name + '</label>').appendTo(p);
+
+                op1.bind("click", function () {
+                    return _this.updateCustomOptions();
+                });
+                return op1;
+            };
+
+            OptionsDialog.prototype.updateCustomOptions = function () {
+                var disabled = (!this._optCustom.is(':checked'));
+                this._rows.prop("disabled", disabled);
+                this._cols.prop("disabled", disabled);
+                this._mines.prop("disabled", disabled);
+
+                var values;
+
+                if (disabled) {
+                    values = View.UserOptions.getOptionsFor(this.getSelectedGameMode());
+                    this._rows.removeClass('invalid');
+                    this._cols.removeClass('invalid');
+                    this._mines.removeClass('invalid');
+                } else {
+                    values = this.userOptions.customOptions;
+                }
+
+                this._rows.val(values.rows.toString());
+                this._cols.val(values.cols.toString());
+                this._mines.val(values.mines.toString());
+            };
+
+            OptionsDialog.prototype.createPanel = function () {
+                this._optionsPanel = $('<div/>').attr('title', 'Opções').addClass('optionsPanel');
+
+                var table = $('<table/>').appendTo(this._optionsPanel).attr('cellspacing', '0').attr('cellpadding', '0').attr('style', 'width:100%');
+                var tr = $('<td/>').appendTo(table);
+                var td = $('<td/>').appendTo(tr).attr('style', 'text-align:left');
+
+                this._optBegginner = this.createGameModeRadioButton(td, 0 /* Begginner */, 'options_board_begginner', 'Iniciante');
+                this._optIntermediate = this.createGameModeRadioButton(td, 1 /* Intermediate */, 'options_board_intermediate', 'Intermediário');
+                this._optExpert = this.createGameModeRadioButton(td, 2 /* Expert */, 'options_board_expert', 'Experiente');
+                this._optCustom = this.createGameModeRadioButton(td, 3 /* Custom */, 'options_board_custom', 'Customizado');
+
+                var minValues = View.UserOptions.getMinOptionValues();
+                var maxValues = View.UserOptions.getMaxOptionValues();
+
+                var td = $('<td/>').appendTo(tr).attr('style', 'text-align:right;vertical-align:middle');
+                var p = $('<p/>').appendTo(td);
+                $('<label for="custom_rows">Linhas (' + minValues.rows.toString() + ' a ' + maxValues.rows.toString() + '):&nbsp;</label>').appendTo(p);
+                this._rows = $('<input id="custom_rows" type="text" maxlength="3"></input>').appendTo(p);
+
+                var p = $('<p/>').appendTo(td);
+                $('<label for="custom_cols">Colunas (' + minValues.cols.toString() + ' a ' + maxValues.cols.toString() + '):&nbsp;</label>').appendTo(p);
+                this._cols = $('<input id="custom_cols" type="text" maxlength="3"></input>').appendTo(p);
+
+                var p = $('<p/>').appendTo(td);
+                $('<label for="custom_mines">Minas (' + minValues.mines.toString() + ' a ' + maxValues.mines.toString() + '):&nbsp;</label>').appendTo(p);
+                this._mines = $('<input id="custom_mines" type="text" maxlength="3"></input>').appendTo(p);
+                this.updateCustomOptions();
+
+                var p = $('<p/>').appendTo(this._optionsPanel);
+                this._putMinesAfterFirstOpen = $('<input id="empty_square_on_first_click" type="checkbox" value="1" />').appendTo(p);
+                if (this.userOptions.putMinesAfterFirstOpen) {
+                    this._putMinesAfterFirstOpen.attr('checked', 'checked');
+                }
+                $('<label for="empty_square_on_first_click">Impedir fim de jogo no primeiro clique</label>').appendTo(p);
+            };
+
+            OptionsDialog.prototype.validate = function () {
+                if (!this._optCustom.is(':checked')) {
+                    return true;
+                }
+
+                var minValues = View.UserOptions.getMinOptionValues();
+                var maxValues = View.UserOptions.getMaxOptionValues();
+
+                var v1 = this.validateValue(this._rows, minValues.rows, maxValues.rows);
+                var v2 = this.validateValue(this._cols, minValues.cols, maxValues.cols);
+                var v3 = this.validateValue(this._mines, minValues.mines, maxValues.mines);
+
+                return v1 && v2 && v3;
+            };
+
+            OptionsDialog.prototype.validateValue = function (e, minValue, maxValue) {
+                var valid = false;
+                var value = e.val();
+                if (/^\d+$/.test(value)) {
+                    var n = parseInt(value);
+                    valid = n >= minValue && n <= maxValue;
+                }
+                if (valid) {
+                    e.removeClass('invalid');
+                } else {
+                    e.addClass('invalid');
+                }
+                return valid;
+            };
+
+            OptionsDialog.prototype.getSelectedGameMode = function () {
+                if (this._optBegginner.is(':checked')) {
+                    return 0 /* Begginner */;
+                } else if (this._optIntermediate.is(':checked')) {
+                    return 1 /* Intermediate */;
+                } else if (this._optExpert.is(':checked')) {
+                    return 2 /* Expert */;
+                } else {
+                    return 3 /* Custom */;
+                }
+            };
+
+            OptionsDialog.prototype.show = function () {
+                var _this = this;
+                if (this._optionsPanel === undefined) {
+                    this.createPanel();
+                }
+
+                this._optionsPanel.dialog({
+                    modal: true,
+                    width: 350,
+                    buttons: {
+                        "OK": function () {
+                            if (!_this.validate()) {
+                                return;
+                            }
+                            _this.userOptions.gameMode = _this.getSelectedGameMode();
+                            if (_this.userOptions.gameMode === 3 /* Custom */) {
+                                _this.userOptions.gameMode = 3 /* Custom */;
+                                _this.userOptions.customOptions.rows = parseInt(_this._rows.val());
+                                _this.userOptions.customOptions.cols = parseInt(_this._cols.val());
+                                _this.userOptions.customOptions.mines = parseInt(_this._mines.val());
+                            }
+                            _this.userOptions.putMinesAfterFirstOpen = _this._putMinesAfterFirstOpen.is(':checked');
+                            _this._optionsPanel.dialog("close");
+                            _this.callback();
+                        },
+                        "Cancelar": function () {
+                            _this._optionsPanel.dialog("close");
+                        }
+                    }
+                });
+            };
+            return OptionsDialog;
+        })();
+        View.OptionsDialog = OptionsDialog;
+    })(Minesweeper.View || (Minesweeper.View = {}));
+    var View = Minesweeper.View;
+})(Minesweeper || (Minesweeper = {}));
+var Minesweeper;
+(function (Minesweeper) {
+    (function (View) {
+        (function (GameMode) {
+            GameMode[GameMode["Begginner"] = 0] = "Begginner";
+            GameMode[GameMode["Intermediate"] = 1] = "Intermediate";
+            GameMode[GameMode["Expert"] = 2] = "Expert";
+            GameMode[GameMode["Custom"] = 3] = "Custom";
+        })(View.GameMode || (View.GameMode = {}));
+        var GameMode = View.GameMode;
+
+        var BoardOptions = (function () {
+            function BoardOptions(rows, cols, mines) {
+                this.rows = rows;
+                this.cols = cols;
+                this.mines = mines;
+            }
+            BoardOptions.clone = function (item) {
+                return new BoardOptions(item.rows, item.cols, item.mines);
+            };
+            return BoardOptions;
+        })();
+        View.BoardOptions = BoardOptions;
+
+        var _begginnerOptions = new BoardOptions(9, 9, 10);
+        var _intermediateOptions = new BoardOptions(16, 16, 40);
+        var _expertOptions = new BoardOptions(16, 30, 99);
+        var _minOptionValues = new BoardOptions(8, 8, 10);
+        var _maxOptionValues = new BoardOptions(24, 30, 667);
+
+        var UserOptions = (function () {
+            function UserOptions() {
+                this._allOptions = {
+                    gameMode: 0 /* Begginner */,
+                    customOptions: BoardOptions.clone(_begginnerOptions),
+                    putMinesAfterFirstOpen: true
+                };
+            }
+            Object.defineProperty(UserOptions.prototype, "gameMode", {
+                get: function () {
+                    return this._allOptions.gameMode;
+                },
+                set: function (value) {
+                    this._allOptions.gameMode = value;
+                },
+                enumerable: true,
+                configurable: true
+            });
+
+
+            Object.defineProperty(UserOptions.prototype, "customOptions", {
+                get: function () {
+                    return this._allOptions.customOptions;
+                },
+                set: function (value) {
+                    this._allOptions.customOptions = value;
+                },
+                enumerable: true,
+                configurable: true
+            });
+
+
+            Object.defineProperty(UserOptions.prototype, "putMinesAfterFirstOpen", {
+                get: function () {
+                    return this._allOptions.putMinesAfterFirstOpen;
+                },
+                set: function (value) {
+                    this._allOptions.putMinesAfterFirstOpen = value;
+                },
+                enumerable: true,
+                configurable: true
+            });
+
+
+            UserOptions.prototype.getCurrentOptions = function () {
+                if (this.gameMode === 3 /* Custom */) {
+                    return BoardOptions.clone(this.customOptions);
+                }
+                return UserOptions.getOptionsFor(this.gameMode);
+            };
+
+            UserOptions.getOptionsFor = function (gameMode) {
+                switch (gameMode) {
+                    case 0 /* Begginner */:
+                        return BoardOptions.clone(_begginnerOptions);
+                    case 1 /* Intermediate */:
+                        return BoardOptions.clone(_intermediateOptions);
+                    case 2 /* Expert */:
+                        return BoardOptions.clone(_expertOptions);
+                    default:
+                        return BoardOptions.clone(_begginnerOptions);
+                }
+            };
+
+            UserOptions.getMinOptionValues = function () {
+                return BoardOptions.clone(_minOptionValues);
+            };
+
+            UserOptions.getMaxOptionValues = function () {
+                return BoardOptions.clone(_maxOptionValues);
+            };
+
+            UserOptions.load = function () {
+                var options = new UserOptions();
+                if (localStorage && localStorage.getItem && JSON && JSON.parse) {
+                    var stored = localStorage.getItem("options");
+                    if (stored) {
+                        options._allOptions = JSON.parse(stored);
+                        return options;
+                    }
+                }
+                return options;
+            };
+
+            UserOptions.prototype.save = function () {
+                if (localStorage && localStorage.setItem && JSON && JSON.stringify) {
+                    localStorage.setItem("options", JSON.stringify(this._allOptions));
+                }
+            };
+            return UserOptions;
+        })();
+        View.UserOptions = UserOptions;
     })(Minesweeper.View || (Minesweeper.View = {}));
     var View = Minesweeper.View;
 })(Minesweeper || (Minesweeper = {}));

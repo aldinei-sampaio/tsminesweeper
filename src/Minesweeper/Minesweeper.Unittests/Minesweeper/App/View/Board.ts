@@ -1,10 +1,4 @@
 ﻿module Minesweeper.View {
-    enum GameMode {
-        Begginner,
-        Intermediate,
-        Expert,
-        Custom
-    }
 
     export class Board {
         private _container: JQuery;
@@ -13,17 +7,15 @@
         private _topPanel: JQuery;
         private _resetButton: JQuery;
         private _optionsButton: JQuery;
-        private _gameMode = GameMode.Begginner;
-        private _optionsPanel: JQuery;
         private _headerFlagCountPanel: JQuery;
         private _headerTimerPanel: JQuery;
-        private _putMinesAfeterFirstOpen = true;
         private _tipButton: JQuery;
+        private _options = UserOptions.load();
+        private _optionsDialog = new OptionsDialog(this._options, () => { this._options.save(); this.reset(); });
 
         constructor(container: JQuery) {
             this._container = container;
         }
-
 
         private drawFooter(table: JQuery): void {
             if (this._tipButton) {
@@ -63,66 +55,9 @@
             td.attr('colspan', '2');
             this._optionsButton = $('<button/>').appendTo(td);
             App.addImage(this._optionsButton, 'Options');
-            this._optionsButton.bind('click', () => this.showOptionsDialog());
+            this._optionsButton.bind('click', () => this._optionsDialog.show());
         }
 
-        private showOptionsDialog(): void {
-            if (this._optionsPanel === undefined) {
-                this._optionsPanel = $('<div/>').attr('title', 'Opções').addClass('optionsPanel');
-
-                var p = $('<p/>').appendTo(this._optionsPanel);
-                var op1 = $('<input id="options_board_size_1" type="radio" name="options_board_size" value="1" />').appendTo(p);
-                if (this._gameMode == GameMode.Begginner) {
-                    op1.attr('checked', 'checked');
-                }
-                $('<label for="options_board_size_1">Iniciante</label>').appendTo(p);
-
-                p = $('<p/>').appendTo(this._optionsPanel);
-                var op2 = $('<input id="options_board_size_2" type="radio" name="options_board_size" value="2" />').appendTo(p);
-                if (this._gameMode == GameMode.Intermediate) {
-                    op2.attr('checked', 'checked');
-                }
-                $('<label for="options_board_size_2">Intermediário</label>').appendTo(p);
-
-                var p = $('<p/>').appendTo(this._optionsPanel);
-                var op3 = $('<input id="options_board_size_3" type="radio" name="options_board_size" value="3" />').appendTo(p);
-                if (this._gameMode == GameMode.Expert) {
-                    op3.attr('checked', 'checked');
-                }
-                $('<label for="options_board_size_3">Experiente</label>').appendTo(p);
-
-                
-                var p = $('<p/>').appendTo(this._optionsPanel);
-                var chk = $('<input id="empty_square_on_first_click" type="checkbox" value="1" />').appendTo(p);
-                if (this._putMinesAfeterFirstOpen) {
-                    chk.attr('checked', 'checked');
-                }
-                $('<label for="empty_square_on_first_click">Impedir fim de jogo no primeiro clique</label>').appendTo(p);
-            }
-
-            this._optionsPanel.dialog(
-                {
-                    modal: true,
-                    width: 350,
-                    buttons: {
-                        "OK": () => {
-                            this._optionsPanel.dialog("close");
-                            if ($('#options_board_size_1').is(':checked')) {
-                                this._gameMode = GameMode.Begginner;
-                            } else if ($('#options_board_size_2').is(':checked')) {
-                                this._gameMode = GameMode.Intermediate;
-                            } else {
-                                this._gameMode = GameMode.Expert;
-                            }
-                            this._putMinesAfeterFirstOpen = $('#empty_square_on_first_click').is(':checked');
-                            this.reset();
-                        },
-                        "Cancelar": () => {
-                            this._optionsPanel.dialog("close");
-                        }
-                    }
-                });
-        }
 
         private updateFlagCount(): void {
             this.showDisplay(this._headerFlagCountPanel, this._field.remainingFlags, 'MineLabel');
@@ -217,32 +152,9 @@
             }
             this._cells = [];
 
-            switch (this._gameMode) {
-                case GameMode.Begginner:
-                    this._field = new Model.Field(9, 9);
-                    this._field.putMines(10, this._putMinesAfeterFirstOpen);
-                    break;
-                case GameMode.Intermediate:
-                    this._field = new Model.Field(16, 16);
-                    this._field.putMines(40, this._putMinesAfeterFirstOpen);
-                    break;
-                case GameMode.Expert:
-                    this._field = new Model.Field(16, 30);
-                    this._field.putMines(99, this._putMinesAfeterFirstOpen);
-                    break;
-                case GameMode.Custom:
-                    this._field = new Model.Field(3, 3);
-                    //this._field.putMines(16, true);
-
-                    
-                    this._field.putMine(this._field.getSquare(1, 1));
-                    this._field.putMine(this._field.getSquare(2, 1));
-                    this._field.putMine(this._field.getSquare(2, 2));
-                    
-                    break;
-                default:
-                    throw ('Gamemode não definido');
-            }
+            var options = this._options.getCurrentOptions();
+            this._field = new Model.Field(options.rows, options.cols);
+            this._field.putMines(options.mines, this._options.putMinesAfterFirstOpen);
 
             this._field.onGameOver.add((result) => {
                 this._resetButton.empty();
