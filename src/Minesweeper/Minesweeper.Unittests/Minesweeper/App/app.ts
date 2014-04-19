@@ -1,12 +1,5 @@
-﻿$(() => {
-    $(document).bind("contextmenu", (e) => e.preventDefault());
-    $('#version').text('Versão ' + App.version);
-    App.start($('#content'));
-});
-
-
-class App {
-    public static version = '0.1.5';
+﻿class App {
+    public static version = '0.1.6';
 
     public static addImage(container: JQuery, imageName: String): JQuery {
         return $('<img/>').attr('src', 'Images/' + imageName + '.png?' + App.version).appendTo(container);

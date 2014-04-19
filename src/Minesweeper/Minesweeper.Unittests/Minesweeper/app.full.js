@@ -1,12 +1,4 @@
-﻿$(function () {
-    $(document).bind("contextmenu", function (e) {
-        return e.preventDefault();
-    });
-    $('#version').text('Versão ' + App.version);
-    App.start($('#content'));
-});
-
-var App = (function () {
+﻿var App = (function () {
     function App() {
     }
     App.addImage = function (container, imageName) {
@@ -38,7 +30,7 @@ var App = (function () {
         var board = new Minesweeper.View.Board(container);
         board.reset();
     };
-    App.version = '0.1.5';
+    App.version = '0.1.6';
     return App;
 })();
 var Minesweeper;
@@ -49,9 +41,13 @@ var Minesweeper;
                 this._listeners = [];
             }
             TypedEvent.prototype.add = function (listener) {
+                /// <summary>Registers a new listener for the event.</summary>
+                /// <param name="listener">The callback function to register.</param>
                 this._listeners.push(listener);
             };
             TypedEvent.prototype.remove = function (listener) {
+                /// <summary>Unregisters a listener from the event.</summary>
+                /// <param name="listener">The callback function that was registered. If missing then all listeners will be removed.</param>
                 if (typeof listener === 'function') {
                     for (var i = 0, l = this._listeners.length; i < l; l++) {
                         if (this._listeners[i] === listener) {
@@ -69,6 +65,8 @@ var Minesweeper;
                 for (var _i = 0; _i < (arguments.length - 0); _i++) {
                     a[_i] = arguments[_i + 0];
                 }
+                /// <summary>Invokes all of the listeners for this event.</summary>
+                /// <param name="args">Optional set of arguments to pass to listners.</param>
                 var context = {};
                 var listeners = this._listeners.slice(0);
                 for (var i = 0, l = listeners.length; i < l; i++) {
@@ -484,6 +482,7 @@ var Minesweeper;
                     return false;
                 });
                 if (closedCount > square.displayNumber) {
+                    //return tip;
                 } else {
                     return undefined;
                 }
@@ -886,6 +885,7 @@ var Minesweeper;
                     case 3 /* Custom */:
                         this._field = new Minesweeper.Model.Field(3, 3);
 
+                        //this._field.putMines(16, true);
                         this._field.putMine(this._field.getSquare(1, 1));
                         this._field.putMine(this._field.getSquare(2, 1));
                         this._field.putMine(this._field.getSquare(2, 2));
@@ -1051,3 +1051,4 @@ var Minesweeper;
     })(Minesweeper.View || (Minesweeper.View = {}));
     var View = Minesweeper.View;
 })(Minesweeper || (Minesweeper = {}));
+//# sourceMappingURL=app.full.js.map
