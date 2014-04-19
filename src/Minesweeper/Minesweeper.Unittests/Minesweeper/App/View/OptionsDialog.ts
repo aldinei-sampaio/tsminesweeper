@@ -9,6 +9,7 @@
         private _cols: JQuery;
         private _mines: JQuery;
         private _putMinesAfterFirstOpen: JQuery;
+        private _allowTips: JQuery;
 
         constructor(public userOptions: UserOptions, public callback: () => void) {
         }
@@ -86,6 +87,13 @@
                 this._putMinesAfterFirstOpen.attr('checked', 'checked');
             }
             $('<label for="empty_square_on_first_click">Impedir fim de jogo no primeiro clique</label>').appendTo(p);
+
+            var p = $('<p/>').appendTo(this._optionsPanel);
+            this._allowTips = $('<input id="allow_tips" type="checkbox" value="1" />').appendTo(p);
+            if (this.userOptions.allowTips) {
+                this._allowTips.attr('checked', 'checked');
+            }
+            $('<label for="allow_tips">Exibir opção de dicas</label>').appendTo(p);
         }
 
         private validate(): boolean {
@@ -152,6 +160,7 @@
                                 this.userOptions.customOptions.mines = parseInt(this._mines.val());
                             }
                             this.userOptions.putMinesAfterFirstOpen = this._putMinesAfterFirstOpen.is(':checked');
+                            this.userOptions.allowTips = this._allowTips.is(':checked');
                             this._optionsPanel.dialog("close");
                             this.callback();
                         },

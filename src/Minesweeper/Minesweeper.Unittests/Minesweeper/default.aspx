@@ -96,40 +96,76 @@
             background: url(Images/NormalButtonDisabled.png?<%= Minesweeper.VersionHelper.GetFull() %>) no-repeat top; 
         }
 
-        .exploded {
-            background-color:red;
+        .tip_safe {
+            background: url(Images/TipGreen.png?<%= Minesweeper.VersionHelper.GetFull() %>) no-repeat top;
         }
 
-        .tip {
-            background-image:url(Images/TipGreen.png?<%= Minesweeper.VersionHelper.GetFull() %>);
-        }
-
-        .tip a {
+        .tip_safe a {
             background: url(Images/TipButtonReady.png?<%= Minesweeper.VersionHelper.GetFull() %>) no-repeat top; 
         }
 
-        .tip a:hover {
+        .tip_safe a:hover {
             background: url(Images/TipButtonHover.png?<%= Minesweeper.VersionHelper.GetFull() %>) no-repeat top; 
         }
 
-        .tip a:active {
+        .tip_safe a:active {
             background: url(Images/TipButtonPressed.png?<%= Minesweeper.VersionHelper.GetFull() %>) no-repeat top; 
         }
 
+        .tip_safe a[disabled=disabled] {
+            background: url(Images/TipButtonDisabled.png?<%= Minesweeper.VersionHelper.GetFull() %>) no-repeat top; 
+        }
+
+        .tip_mine {
+            background: url(Images/TipRed.png?<%= Minesweeper.VersionHelper.GetFull() %>) no-repeat top;
+        }
+
+        .tip_mine a {
+            background: url(Images/TipRedButtonReady.png?<%= Minesweeper.VersionHelper.GetFull() %>) no-repeat top; 
+        }
+
+        .tip_mine a:hover {
+            background: url(Images/TipRedButtonHover.png?<%= Minesweeper.VersionHelper.GetFull() %>) no-repeat top; 
+        }
+
+        .tip_mine a:active {
+            background: url(Images/TipRedButtonPressed.png?<%= Minesweeper.VersionHelper.GetFull() %>) no-repeat top; 
+        }
+
+        .tip_mine a[disabled=disabled] {
+            background: url(Images/TipRedButtonDisabled.png?<%= Minesweeper.VersionHelper.GetFull() %>) no-repeat top; 
+        }
+
+        .exploded div {
+            background: none;
+            background-color: red;
+        }
+        
         .headerPanel {
             text-align: center;
             background-color: #D0D0D0;
             padding: 3px;
         }
 
-        .headerDisplay {
+        .flagDisplay {
             width: 56px;
             height: 24px;
             background: black;
             padding: 2px;
         }
 
-        .headerDisplay img {
+        .flagDisplay img {
+            margin: 1px;
+        }
+
+        .clockDisplay {
+            width: 68px;
+            height: 24px;
+            background: black;
+            padding: 2px;
+        }
+
+        .clockDisplay img {
             margin: 1px;
         }
 

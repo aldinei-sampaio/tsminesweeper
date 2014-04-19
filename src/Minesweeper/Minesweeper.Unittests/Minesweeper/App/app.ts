@@ -16,8 +16,8 @@
             'Ready', 'Started', 'Won', 'Lost',
             'MineLabel', 'ClockLabel', 'Tip', 'Options',
             'NormalButtonReady', 'NormalButtonHover', 'NormalButtonPressed', 'NormalButtonDisabled',
-            'TipButtonReady', 'TipButtonHover', 'TipButtonPressed', 'TipButtonDisabled',
-            'TipGreen'
+            'TipButtonReady', 'TipButtonHover', 'TipButtonPressed', 'TipButtonDisabled', 'TipGreen',
+            'TipRedButtonReady', 'TipRedButtonHover', 'TipRedButtonPressed', 'TipRedButtonDisabled', 'TipRed'
         ];
         loader.onLoaded.add(() => this.showBoard(container));
         loader.load()

@@ -1,11 +1,17 @@
 ﻿module Minesweeper.Model {
+    export enum TipType {
+        none = 0,
+        safe = 1,
+        mine = 2
+    }
+
     export class Square {
         private _row = 0;
         private _col = 0
         private _isOpenned = false;
         private _isFlagged = false;
         private _isUnknown = false;
-        private _isTip = false;
+        private _tipType = TipType.none;
 
         public onUpdate: IEvent = new TypedEvent();
 
@@ -57,13 +63,13 @@
             this.onUpdate.trigger();
         }
 
-        public get isTip(): boolean {
-            return this._isTip;
+        public get tipType(): TipType {
+            return this._tipType;
         }
 
-        public set isTip(value: boolean) {
-            if (this._isTip !== value) {
-                this._isTip = value;
+        public set tipType(value: TipType) {
+            if (this._tipType !== value) {
+                this._tipType = value;
                 this.onUpdate.trigger();
             }
         }

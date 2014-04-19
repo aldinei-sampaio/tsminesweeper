@@ -60,10 +60,6 @@
             var div = this.resetAndCreateDiv();
             var mines = this._square.displayNumber;
 
-            if (this._square.isTip) {
-                div.addClass('tip');
-            }
-
             if (this._square.hasMine) {
                 App.addImage(div, 'Mine');
             } else if (mines == 0) {
@@ -100,9 +96,6 @@
 
         private showButton(isEnabled: boolean): void {
             var div = this.resetAndCreateDiv();
-            if (this._square.isTip) {
-                div.addClass('tip');
-            }
 
             this._button = $('<a/>').appendTo(div).attr('href','javascript:void(0)');
             this._button.html('&nbsp;');
@@ -138,7 +131,15 @@
             this._container.removeClass();
             this._container.unbind();
 
-            return $('<div/>').appendTo(this._container).addClass('fieldCell');
+            var div = $('<div/>').appendTo(this._container).addClass('fieldCell');
+
+            if (this._square.tipType === Model.TipType.safe) {
+                div.addClass('tip_safe');
+            } else if (this._square.tipType === Model.TipType.mine) {
+                div.addClass('tip_mine');
+            }
+
+            return div;
         }
 
         public reveal(showMinesAsFlags: boolean): void {

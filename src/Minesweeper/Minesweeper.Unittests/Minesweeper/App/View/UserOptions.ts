@@ -25,14 +25,16 @@
     interface IAllOptions {
         gameMode: GameMode;
         customOptions: BoardOptions;
-        putMinesAfterFirstOpen: boolean
+        putMinesAfterFirstOpen: boolean;
+        allowTips: boolean;
     }
 
     export class UserOptions  {
         private _allOptions: IAllOptions = {
             gameMode: GameMode.Begginner,
             customOptions: BoardOptions.clone(_begginnerOptions),
-            putMinesAfterFirstOpen: true
+            putMinesAfterFirstOpen: true,
+            allowTips: true
         };
 
         public get gameMode(): GameMode {
@@ -57,6 +59,14 @@
 
         public set putMinesAfterFirstOpen(value: boolean) {
             this._allOptions.putMinesAfterFirstOpen = value;
+        }
+
+        public get allowTips(): boolean {
+            return this._allOptions.allowTips;
+        }
+
+        public set allowTips(value: boolean) {
+            this._allOptions.allowTips = value;
         }
 
         public getCurrentOptions(): BoardOptions {

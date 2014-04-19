@@ -11,6 +11,7 @@
         private _headerTimerPanel: JQuery;
         private _tipButton: JQuery;
         private _options = UserOptions.load();
+        private _tipSpan: JQuery;
         private _optionsDialog = new OptionsDialog(this._options, () => { this._options.save(); this.reset(); });
 
         constructor(container: JQuery) {
@@ -38,17 +39,18 @@
             var td = $('<td/>').appendTo(tr);
             td.attr('style', 'text-align:left');
 
-            this._tipButton = $('<button/>').appendTo(td);
-            App.addImage(this._tipButton, 'Tip');
-            this._tipButton.bind('click', () => {
-                if (this._field.createTip()) {
-                    $('#tip').html('');
-                } else {
-                    $('#tip').html('Dica não disponível');
-                }
-            });
-
-            $('<span id="tip"/>').appendTo(td).addClass('tipMessage');
+            if (this._options.allowTips) {
+                this._tipButton = $('<button/>').appendTo(td);
+                App.addImage(this._tipButton, 'Tip');
+                this._tipButton.bind('click', () => {
+                    if (this._field.createTip()) {
+                        this._tipSpan.html('');
+                    } else {
+                        this._tipSpan.html('Dica não disponível');
+                    }
+                });
+            }
+            this._tipSpan = $('<span id="tip"/>').appendTo(td).addClass('tipMessage');
 
             var td = $('<td/>').appendTo(tr);
             td.attr('style', 'text-align:right');
@@ -60,7 +62,7 @@
 
 
         private updateFlagCount(): void {
-            this.showDisplay(this._headerFlagCountPanel, this._field.remainingFlags, 'MineLabel');
+            this.showDisplay(this._headerFlagCountPanel, this._field.remainingFlags, 'MineLabel', 3);
         }
 
         private drawHeader(table: JQuery): void {
@@ -98,9 +100,9 @@
                     var td = $('<td/>').appendTo(tr).addClass('fieldCell');
 
                     var cell = new Cell(td, this._field.getSquare(i, j));
-                    cell.onClick.add((square) => this._field.open(square));
-                    cell.onBothClick.add((square) => this._field.openNeighborhood(square));
-                    cell.onRightClick.add((square) => { this._field.flag(square); this.updateFlagCount() });
+                    cell.onClick.add((square) => { this._field.open(square); this._tipSpan.html(''); });
+                    cell.onBothClick.add((square) => { this._field.openNeighborhood(square);; this._tipSpan.html(''); });
+                    cell.onRightClick.add((square) => { this._field.flag(square); this.updateFlagCount(); this._tipSpan.html(''); });
                     this._cells.push(cell);
                 }
             }
@@ -109,16 +111,16 @@
         private drawFlagDisplay(td: JQuery): void {
             this._headerFlagCountPanel = $('<div/>')
                 .appendTo(td)
-                .addClass('headerDisplay');
+                .addClass('flagDisplay');
             this.updateFlagCount();
         }
 
         private drawTimerDisplay(td: JQuery): void {
             this._headerTimerPanel = $('<div/>')
                 .appendTo(td)
-                .addClass('headerDisplay')
+                .addClass('clockDisplay')
                 .attr('style', 'margin-left:auto');
-            this.showDisplay(this._headerTimerPanel, 0, 'ClockLabel');
+            this.showDisplay(this._headerTimerPanel, 0, 'ClockLabel', 4);
         }
 
         private drawResetPanel(td: JQuery): void {
@@ -130,14 +132,14 @@
             this._resetButton.bind('click', () => { this.reset() });
         }
 
-        private showDisplay(panel: JQuery, value: number, labelImage : string): void {
+        private showDisplay(panel: JQuery, value: number, labelImage: string, size: number): void {
             panel.empty();
 
             App.addImage(panel, labelImage);
 
             var digits = value.toString().split('');
-            var startDigit = digits.length - 3;
-            for (var n = digits.length - 3; n < digits.length; n++) {
+            var startDigit = digits.length - size;
+            for (var n = digits.length - size; n < digits.length; n++) {
                 var imageName = n < 0 ? '0' : digits[n];
                 App.addImage(panel, 'Counter' + imageName);
             }
@@ -169,7 +171,7 @@
             });
 
             this._field.onElapsedTime.add((value) => {
-                this.showDisplay(this._headerTimerPanel, value, 'ClockLabel');
+                this.showDisplay(this._headerTimerPanel, value, 'ClockLabel', 4);
             });
 
             this._container.empty();

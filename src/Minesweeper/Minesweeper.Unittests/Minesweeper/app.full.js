@@ -17,8 +17,8 @@
             'Ready', 'Started', 'Won', 'Lost',
             'MineLabel', 'ClockLabel', 'Tip', 'Options',
             'NormalButtonReady', 'NormalButtonHover', 'NormalButtonPressed', 'NormalButtonDisabled',
-            'TipButtonReady', 'TipButtonHover', 'TipButtonPressed', 'TipButtonDisabled',
-            'TipGreen'
+            'TipButtonReady', 'TipButtonHover', 'TipButtonPressed', 'TipButtonDisabled', 'TipGreen',
+            'TipRedButtonReady', 'TipRedButtonHover', 'TipRedButtonPressed', 'TipRedButtonDisabled', 'TipRed'
         ];
         loader.onLoaded.add(function () {
             return _this.showBoard(container);
@@ -277,7 +277,7 @@ var Minesweeper;
                 this._timerId = setInterval(function () {
                     _this._elapsedTime++;
                     _this.onElapsedTime.trigger(_this._elapsedTime);
-                    if (_this._elapsedTime == 999) {
+                    if (_this._elapsedTime == 9999) {
                         _this.stopTimer();
                     }
                 }, 1000);
@@ -408,7 +408,6 @@ var Minesweeper;
                 });
 
                 if (square) {
-                    square.isTip = true;
                     return square;
                 } else {
                     return undefined;
@@ -421,25 +420,32 @@ var Minesweeper;
                 }
 
                 var flagCount = 0;
-                var closedNeighbors = 0;
+                var closedCount = 0;
                 var candidate;
+                var closedCandidate;
                 this.forEachInVicinity(square, function (square) {
                     if (!square.isOpenned) {
+                        closedCount++;
                         if (square.isFlagged) {
                             flagCount++;
-                        } else if (!square.isTip) {
-                            closedNeighbors++;
+                        } else if (square.tipType === 0 /* none */) {
                             candidate = square;
                         }
                     }
                     return false;
                 });
 
-                if (closedNeighbors === 0) {
+                if (candidate === undefined) {
                     return undefined;
                 }
 
+                if (square.displayNumber === closedCount) {
+                    candidate.tipType = 2 /* mine */;
+                    return candidate;
+                }
+
                 if (square.displayNumber === flagCount) {
+                    candidate.tipType = 1 /* safe */;
                     return candidate;
                 }
 
@@ -494,287 +500,6 @@ var Minesweeper;
     var Model = Minesweeper.Model;
 })(Minesweeper || (Minesweeper = {}));
 ;
-var Minesweeper;
-(function (Minesweeper) {
-    (function (Model) {
-        var Square = (function () {
-            function Square(row, col) {
-                this._row = 0;
-                this._col = 0;
-                this._isOpenned = false;
-                this._isFlagged = false;
-                this._isUnknown = false;
-                this._isTip = false;
-                this.onUpdate = new Model.TypedEvent();
-                this.hasMine = false;
-                this.displayNumber = 0;
-                this._row = row;
-                this._col = col;
-            }
-            Object.defineProperty(Square.prototype, "isFlagged", {
-                get: function () {
-                    return this._isFlagged;
-                },
-                enumerable: true,
-                configurable: true
-            });
-
-            Object.defineProperty(Square.prototype, "isUnknown", {
-                get: function () {
-                    return this._isUnknown;
-                },
-                enumerable: true,
-                configurable: true
-            });
-
-            Square.prototype.open = function () {
-                if (this._isOpenned) {
-                    return;
-                }
-                this._isOpenned = true;
-                this.onUpdate.trigger();
-            };
-
-            Object.defineProperty(Square.prototype, "isOpenned", {
-                get: function () {
-                    return this._isOpenned;
-                },
-                enumerable: true,
-                configurable: true
-            });
-
-            Object.defineProperty(Square.prototype, "row", {
-                get: function () {
-                    return this._row;
-                },
-                enumerable: true,
-                configurable: true
-            });
-
-            Object.defineProperty(Square.prototype, "col", {
-                get: function () {
-                    return this._col;
-                },
-                enumerable: true,
-                configurable: true
-            });
-
-            Square.prototype.toggleFlag = function () {
-                if (this._isFlagged) {
-                    this._isFlagged = false;
-                    this._isUnknown = true;
-                } else if (this._isUnknown) {
-                    this._isUnknown = false;
-                } else {
-                    this._isFlagged = true;
-                }
-                this.onUpdate.trigger();
-            };
-
-            Object.defineProperty(Square.prototype, "isTip", {
-                get: function () {
-                    return this._isTip;
-                },
-                set: function (value) {
-                    if (this._isTip !== value) {
-                        this._isTip = value;
-                        this.onUpdate.trigger();
-                    }
-                },
-                enumerable: true,
-                configurable: true
-            });
-
-            return Square;
-        })();
-        Model.Square = Square;
-    })(Minesweeper.Model || (Minesweeper.Model = {}));
-    var Model = Minesweeper.Model;
-})(Minesweeper || (Minesweeper = {}));
-;
-var Minesweeper;
-(function (Minesweeper) {
-    (function (View) {
-        var Board = (function () {
-            function Board(container) {
-                var _this = this;
-                this._options = View.UserOptions.load();
-                this._optionsDialog = new View.OptionsDialog(this._options, function () {
-                    _this._options.save();
-                    _this.reset();
-                });
-                this._container = container;
-            }
-            Board.prototype.drawFooter = function (table) {
-                var _this = this;
-                if (this._tipButton) {
-                    this._tipButton.unbind();
-                }
-                if (this._optionsButton) {
-                    this._optionsButton.unbind();
-                }
-
-                var panel = $('<div/>').appendTo($('<td/>').appendTo($('<tr/>').appendTo(table)));
-                panel.addClass('footerPanel');
-
-                var panelTable = $('<table/>').appendTo(panel).attr('cellspacing', '0').attr('cellpadding', '0').attr('style', 'width:100%');
-
-                var tr = $('<tr/>').appendTo(panelTable);
-                var td = $('<td/>').appendTo(tr);
-                td.attr('style', 'text-align:left');
-
-                this._tipButton = $('<button/>').appendTo(td);
-                App.addImage(this._tipButton, 'Tip');
-                this._tipButton.bind('click', function () {
-                    if (_this._field.createTip()) {
-                        $('#tip').html('');
-                    } else {
-                        $('#tip').html('Dica não disponível');
-                    }
-                });
-
-                $('<span id="tip"/>').appendTo(td).addClass('tipMessage');
-
-                var td = $('<td/>').appendTo(tr);
-                td.attr('style', 'text-align:right');
-                td.attr('colspan', '2');
-                this._optionsButton = $('<button/>').appendTo(td);
-                App.addImage(this._optionsButton, 'Options');
-                this._optionsButton.bind('click', function () {
-                    return _this._optionsDialog.show();
-                });
-            };
-
-            Board.prototype.updateFlagCount = function () {
-                this.showDisplay(this._headerFlagCountPanel, this._field.remainingFlags, 'MineLabel');
-            };
-
-            Board.prototype.drawHeader = function (table) {
-                if (this._resetButton) {
-                    this._resetButton.unbind();
-                }
-
-                var td = $('<td/>').appendTo($('<tr/>').appendTo(table));
-
-                this._topPanel = $('<div/>').appendTo(td);
-                this._topPanel.addClass('headerPanel');
-
-                var panelTable = $('<table/>').appendTo(this._topPanel).attr('cellspacing', '0').attr('cellpadding', '0').attr('style', 'width:100%');
-
-                var panelTr = $('<tr/>').appendTo(panelTable);
-
-                this.drawFlagDisplay($('<td/>').appendTo(panelTr));
-                this.drawResetPanel($('<td/>').appendTo(panelTr));
-                this.drawTimerDisplay($('<td/>').appendTo(panelTr));
-            };
-
-            Board.prototype.drawCells = function (table) {
-                var _this = this;
-                var boardTable = $('<table/>').appendTo($('<td/>').appendTo($('<tr/>').appendTo(table)));
-                boardTable.addClass('fieldTable');
-                boardTable.attr('cellspacing', '0');
-                boardTable.attr('cellpadding', '0');
-                for (var i = this._field.minRow; i <= this._field.maxRow; i++) {
-                    var tr = $('<tr/>').appendTo(boardTable);
-
-                    for (var j = this._field.minCol; j <= this._field.maxCol; j++) {
-                        var td = $('<td/>').appendTo(tr).addClass('fieldCell');
-
-                        var cell = new View.Cell(td, this._field.getSquare(i, j));
-                        cell.onClick.add(function (square) {
-                            return _this._field.open(square);
-                        });
-                        cell.onBothClick.add(function (square) {
-                            return _this._field.openNeighborhood(square);
-                        });
-                        cell.onRightClick.add(function (square) {
-                            _this._field.flag(square);
-                            _this.updateFlagCount();
-                        });
-                        this._cells.push(cell);
-                    }
-                }
-            };
-
-            Board.prototype.drawFlagDisplay = function (td) {
-                this._headerFlagCountPanel = $('<div/>').appendTo(td).addClass('headerDisplay');
-                this.updateFlagCount();
-            };
-
-            Board.prototype.drawTimerDisplay = function (td) {
-                this._headerTimerPanel = $('<div/>').appendTo(td).addClass('headerDisplay').attr('style', 'margin-left:auto');
-                this.showDisplay(this._headerTimerPanel, 0, 'ClockLabel');
-            };
-
-            Board.prototype.drawResetPanel = function (td) {
-                var _this = this;
-                var resetPanel = $('<div/>').appendTo(td).addClass('resetPanel');
-                this._resetButton = $('<button/>').appendTo(resetPanel);
-                App.addImage(this._resetButton, 'Ready');
-                this._resetButton.bind('click', function () {
-                    _this.reset();
-                });
-            };
-
-            Board.prototype.showDisplay = function (panel, value, labelImage) {
-                panel.empty();
-
-                App.addImage(panel, labelImage);
-
-                var digits = value.toString().split('');
-                var startDigit = digits.length - 3;
-                for (var n = digits.length - 3; n < digits.length; n++) {
-                    var imageName = n < 0 ? '0' : digits[n];
-                    App.addImage(panel, 'Counter' + imageName);
-                }
-            };
-
-            Board.prototype.reset = function () {
-                var _this = this;
-                if (this._field) {
-                    this._field.dispose();
-                }
-                if (this._cells) {
-                    this._cells.forEach(function (item) {
-                        return item.dispose();
-                    });
-                }
-                this._cells = [];
-
-                var options = this._options.getCurrentOptions();
-                this._field = new Minesweeper.Model.Field(options.rows, options.cols);
-                this._field.putMines(options.mines, this._options.putMinesAfterFirstOpen);
-
-                this._field.onGameOver.add(function (result) {
-                    _this._resetButton.empty();
-                    App.addImage(_this._resetButton, result ? 'Won' : 'Lost');
-                    _this._tipButton.prop("disabled", true);
-                    _this._cells.forEach(function (item) {
-                        item.reveal(result);
-                    });
-                });
-
-                this._field.onGameStart.add(function () {
-                    _this._resetButton.empty();
-                    App.addImage(_this._resetButton, 'Started');
-                });
-
-                this._field.onElapsedTime.add(function (value) {
-                    _this.showDisplay(_this._headerTimerPanel, value, 'ClockLabel');
-                });
-
-                this._container.empty();
-                var table = $('<table/>').appendTo(this._container).addClass('mainTable').attr('cellspacing', 0).attr('cellpadding', 0);
-                this.drawHeader(table);
-                this.drawCells(table);
-                this.drawFooter(table);
-            };
-            return Board;
-        })();
-        View.Board = Board;
-    })(Minesweeper.View || (Minesweeper.View = {}));
-    var View = Minesweeper.View;
-})(Minesweeper || (Minesweeper = {}));
 var Minesweeper;
 (function (Minesweeper) {
     (function (View) {
@@ -839,10 +564,6 @@ var Minesweeper;
                 var div = this.resetAndCreateDiv();
                 var mines = this._square.displayNumber;
 
-                if (this._square.isTip) {
-                    div.addClass('tip');
-                }
-
                 if (this._square.hasMine) {
                     App.addImage(div, 'Mine');
                 } else if (mines == 0) {
@@ -876,9 +597,6 @@ var Minesweeper;
             Cell.prototype.showButton = function (isEnabled) {
                 var _this = this;
                 var div = this.resetAndCreateDiv();
-                if (this._square.isTip) {
-                    div.addClass('tip');
-                }
 
                 this._button = $('<a/>').appendTo(div).attr('href', 'javascript:void(0)');
                 this._button.html('&nbsp;');
@@ -916,7 +634,15 @@ var Minesweeper;
                 this._container.removeClass();
                 this._container.unbind();
 
-                return $('<div/>').appendTo(this._container).addClass('fieldCell');
+                var div = $('<div/>').appendTo(this._container).addClass('fieldCell');
+
+                if (this._square.tipType === 1 /* safe */) {
+                    div.addClass('tip_safe');
+                } else if (this._square.tipType === 2 /* mine */) {
+                    div.addClass('tip_mine');
+                }
+
+                return div;
             };
 
             Cell.prototype.reveal = function (showMinesAsFlags) {
@@ -943,28 +669,188 @@ var Minesweeper;
 var Minesweeper;
 (function (Minesweeper) {
     (function (View) {
-        var ImageLoader = (function () {
-            function ImageLoader() {
-                this.imageList = [];
-                this.onLoaded = new Minesweeper.Model.TypedEvent();
-            }
-            ImageLoader.prototype.load = function () {
+        var Board = (function () {
+            function Board(container) {
                 var _this = this;
-                var preloadDiv = $('<div/>').appendTo($('body')).attr('style', 'display:none');
+                this._options = View.UserOptions.load();
+                this._optionsDialog = new View.OptionsDialog(this._options, function () {
+                    _this._options.save();
+                    _this.reset();
+                });
+                this._container = container;
+            }
+            Board.prototype.drawFooter = function (table) {
+                var _this = this;
+                if (this._tipButton) {
+                    this._tipButton.unbind();
+                }
+                if (this._optionsButton) {
+                    this._optionsButton.unbind();
+                }
 
-                var loadedCount = 0;
-                this.imageList.forEach(function (name) {
-                    App.addImage(preloadDiv, name).load(function () {
-                        loadedCount++;
-                        if (loadedCount == _this.imageList.length) {
-                            _this.onLoaded.trigger();
+                var panel = $('<div/>').appendTo($('<td/>').appendTo($('<tr/>').appendTo(table)));
+                panel.addClass('footerPanel');
+
+                var panelTable = $('<table/>').appendTo(panel).attr('cellspacing', '0').attr('cellpadding', '0').attr('style', 'width:100%');
+
+                var tr = $('<tr/>').appendTo(panelTable);
+                var td = $('<td/>').appendTo(tr);
+                td.attr('style', 'text-align:left');
+
+                if (this._options.allowTips) {
+                    this._tipButton = $('<button/>').appendTo(td);
+                    App.addImage(this._tipButton, 'Tip');
+                    this._tipButton.bind('click', function () {
+                        if (_this._field.createTip()) {
+                            _this._tipSpan.html('');
+                        } else {
+                            _this._tipSpan.html('Dica não disponível');
                         }
                     });
+                }
+                this._tipSpan = $('<span id="tip"/>').appendTo(td).addClass('tipMessage');
+
+                var td = $('<td/>').appendTo(tr);
+                td.attr('style', 'text-align:right');
+                td.attr('colspan', '2');
+                this._optionsButton = $('<button/>').appendTo(td);
+                App.addImage(this._optionsButton, 'Options');
+                this._optionsButton.bind('click', function () {
+                    return _this._optionsDialog.show();
                 });
             };
-            return ImageLoader;
+
+            Board.prototype.updateFlagCount = function () {
+                this.showDisplay(this._headerFlagCountPanel, this._field.remainingFlags, 'MineLabel', 3);
+            };
+
+            Board.prototype.drawHeader = function (table) {
+                if (this._resetButton) {
+                    this._resetButton.unbind();
+                }
+
+                var td = $('<td/>').appendTo($('<tr/>').appendTo(table));
+
+                this._topPanel = $('<div/>').appendTo(td);
+                this._topPanel.addClass('headerPanel');
+
+                var panelTable = $('<table/>').appendTo(this._topPanel).attr('cellspacing', '0').attr('cellpadding', '0').attr('style', 'width:100%');
+
+                var panelTr = $('<tr/>').appendTo(panelTable);
+
+                this.drawFlagDisplay($('<td/>').appendTo(panelTr));
+                this.drawResetPanel($('<td/>').appendTo(panelTr));
+                this.drawTimerDisplay($('<td/>').appendTo(panelTr));
+            };
+
+            Board.prototype.drawCells = function (table) {
+                var _this = this;
+                var boardTable = $('<table/>').appendTo($('<td/>').appendTo($('<tr/>').appendTo(table)));
+                boardTable.addClass('fieldTable');
+                boardTable.attr('cellspacing', '0');
+                boardTable.attr('cellpadding', '0');
+                for (var i = this._field.minRow; i <= this._field.maxRow; i++) {
+                    var tr = $('<tr/>').appendTo(boardTable);
+
+                    for (var j = this._field.minCol; j <= this._field.maxCol; j++) {
+                        var td = $('<td/>').appendTo(tr).addClass('fieldCell');
+
+                        var cell = new View.Cell(td, this._field.getSquare(i, j));
+                        cell.onClick.add(function (square) {
+                            _this._field.open(square);
+                            _this._tipSpan.html('');
+                        });
+                        cell.onBothClick.add(function (square) {
+                            _this._field.openNeighborhood(square);
+                            ;
+                            _this._tipSpan.html('');
+                        });
+                        cell.onRightClick.add(function (square) {
+                            _this._field.flag(square);
+                            _this.updateFlagCount();
+                            _this._tipSpan.html('');
+                        });
+                        this._cells.push(cell);
+                    }
+                }
+            };
+
+            Board.prototype.drawFlagDisplay = function (td) {
+                this._headerFlagCountPanel = $('<div/>').appendTo(td).addClass('flagDisplay');
+                this.updateFlagCount();
+            };
+
+            Board.prototype.drawTimerDisplay = function (td) {
+                this._headerTimerPanel = $('<div/>').appendTo(td).addClass('clockDisplay').attr('style', 'margin-left:auto');
+                this.showDisplay(this._headerTimerPanel, 0, 'ClockLabel', 4);
+            };
+
+            Board.prototype.drawResetPanel = function (td) {
+                var _this = this;
+                var resetPanel = $('<div/>').appendTo(td).addClass('resetPanel');
+                this._resetButton = $('<button/>').appendTo(resetPanel);
+                App.addImage(this._resetButton, 'Ready');
+                this._resetButton.bind('click', function () {
+                    _this.reset();
+                });
+            };
+
+            Board.prototype.showDisplay = function (panel, value, labelImage, size) {
+                panel.empty();
+
+                App.addImage(panel, labelImage);
+
+                var digits = value.toString().split('');
+                var startDigit = digits.length - size;
+                for (var n = digits.length - size; n < digits.length; n++) {
+                    var imageName = n < 0 ? '0' : digits[n];
+                    App.addImage(panel, 'Counter' + imageName);
+                }
+            };
+
+            Board.prototype.reset = function () {
+                var _this = this;
+                if (this._field) {
+                    this._field.dispose();
+                }
+                if (this._cells) {
+                    this._cells.forEach(function (item) {
+                        return item.dispose();
+                    });
+                }
+                this._cells = [];
+
+                var options = this._options.getCurrentOptions();
+                this._field = new Minesweeper.Model.Field(options.rows, options.cols);
+                this._field.putMines(options.mines, this._options.putMinesAfterFirstOpen);
+
+                this._field.onGameOver.add(function (result) {
+                    _this._resetButton.empty();
+                    App.addImage(_this._resetButton, result ? 'Won' : 'Lost');
+                    _this._tipButton.prop("disabled", true);
+                    _this._cells.forEach(function (item) {
+                        item.reveal(result);
+                    });
+                });
+
+                this._field.onGameStart.add(function () {
+                    _this._resetButton.empty();
+                    App.addImage(_this._resetButton, 'Started');
+                });
+
+                this._field.onElapsedTime.add(function (value) {
+                    _this.showDisplay(_this._headerTimerPanel, value, 'ClockLabel', 4);
+                });
+
+                this._container.empty();
+                var table = $('<table/>').appendTo(this._container).addClass('mainTable').attr('cellspacing', 0).attr('cellpadding', 0);
+                this.drawHeader(table);
+                this.drawCells(table);
+                this.drawFooter(table);
+            };
+            return Board;
         })();
-        View.ImageLoader = ImageLoader;
+        View.Board = Board;
     })(Minesweeper.View || (Minesweeper.View = {}));
     var View = Minesweeper.View;
 })(Minesweeper || (Minesweeper = {}));
@@ -1048,6 +934,13 @@ var Minesweeper;
                     this._putMinesAfterFirstOpen.attr('checked', 'checked');
                 }
                 $('<label for="empty_square_on_first_click">Impedir fim de jogo no primeiro clique</label>').appendTo(p);
+
+                var p = $('<p/>').appendTo(this._optionsPanel);
+                this._allowTips = $('<input id="allow_tips" type="checkbox" value="1" />').appendTo(p);
+                if (this.userOptions.allowTips) {
+                    this._allowTips.attr('checked', 'checked');
+                }
+                $('<label for="allow_tips">Exibir opção de dicas</label>').appendTo(p);
             };
 
             OptionsDialog.prototype.validate = function () {
@@ -1114,6 +1007,7 @@ var Minesweeper;
                                 _this.userOptions.customOptions.mines = parseInt(_this._mines.val());
                             }
                             _this.userOptions.putMinesAfterFirstOpen = _this._putMinesAfterFirstOpen.is(':checked');
+                            _this.userOptions.allowTips = _this._allowTips.is(':checked');
                             _this._optionsPanel.dialog("close");
                             _this.callback();
                         },
@@ -1164,7 +1058,8 @@ var Minesweeper;
                 this._allOptions = {
                     gameMode: 0 /* Begginner */,
                     customOptions: BoardOptions.clone(_begginnerOptions),
-                    putMinesAfterFirstOpen: true
+                    putMinesAfterFirstOpen: true,
+                    allowTips: true
                 };
             }
             Object.defineProperty(UserOptions.prototype, "gameMode", {
@@ -1197,6 +1092,18 @@ var Minesweeper;
                 },
                 set: function (value) {
                     this._allOptions.putMinesAfterFirstOpen = value;
+                },
+                enumerable: true,
+                configurable: true
+            });
+
+
+            Object.defineProperty(UserOptions.prototype, "allowTips", {
+                get: function () {
+                    return this._allOptions.allowTips;
+                },
+                set: function (value) {
+                    this._allOptions.allowTips = value;
                 },
                 enumerable: true,
                 configurable: true
@@ -1251,6 +1158,139 @@ var Minesweeper;
             return UserOptions;
         })();
         View.UserOptions = UserOptions;
+    })(Minesweeper.View || (Minesweeper.View = {}));
+    var View = Minesweeper.View;
+})(Minesweeper || (Minesweeper = {}));
+var Minesweeper;
+(function (Minesweeper) {
+    (function (Model) {
+        (function (TipType) {
+            TipType[TipType["none"] = 0] = "none";
+            TipType[TipType["safe"] = 1] = "safe";
+            TipType[TipType["mine"] = 2] = "mine";
+        })(Model.TipType || (Model.TipType = {}));
+        var TipType = Model.TipType;
+
+        var Square = (function () {
+            function Square(row, col) {
+                this._row = 0;
+                this._col = 0;
+                this._isOpenned = false;
+                this._isFlagged = false;
+                this._isUnknown = false;
+                this._tipType = 0 /* none */;
+                this.onUpdate = new Model.TypedEvent();
+                this.hasMine = false;
+                this.displayNumber = 0;
+                this._row = row;
+                this._col = col;
+            }
+            Object.defineProperty(Square.prototype, "isFlagged", {
+                get: function () {
+                    return this._isFlagged;
+                },
+                enumerable: true,
+                configurable: true
+            });
+
+            Object.defineProperty(Square.prototype, "isUnknown", {
+                get: function () {
+                    return this._isUnknown;
+                },
+                enumerable: true,
+                configurable: true
+            });
+
+            Square.prototype.open = function () {
+                if (this._isOpenned) {
+                    return;
+                }
+                this._isOpenned = true;
+                this.onUpdate.trigger();
+            };
+
+            Object.defineProperty(Square.prototype, "isOpenned", {
+                get: function () {
+                    return this._isOpenned;
+                },
+                enumerable: true,
+                configurable: true
+            });
+
+            Object.defineProperty(Square.prototype, "row", {
+                get: function () {
+                    return this._row;
+                },
+                enumerable: true,
+                configurable: true
+            });
+
+            Object.defineProperty(Square.prototype, "col", {
+                get: function () {
+                    return this._col;
+                },
+                enumerable: true,
+                configurable: true
+            });
+
+            Square.prototype.toggleFlag = function () {
+                if (this._isFlagged) {
+                    this._isFlagged = false;
+                    this._isUnknown = true;
+                } else if (this._isUnknown) {
+                    this._isUnknown = false;
+                } else {
+                    this._isFlagged = true;
+                }
+                this.onUpdate.trigger();
+            };
+
+            Object.defineProperty(Square.prototype, "tipType", {
+                get: function () {
+                    return this._tipType;
+                },
+                set: function (value) {
+                    if (this._tipType !== value) {
+                        this._tipType = value;
+                        this.onUpdate.trigger();
+                    }
+                },
+                enumerable: true,
+                configurable: true
+            });
+
+            return Square;
+        })();
+        Model.Square = Square;
+    })(Minesweeper.Model || (Minesweeper.Model = {}));
+    var Model = Minesweeper.Model;
+})(Minesweeper || (Minesweeper = {}));
+;
+var Minesweeper;
+(function (Minesweeper) {
+    (function (View) {
+        var ImageLoader = (function () {
+            function ImageLoader() {
+                this.imageList = [];
+                this.onLoaded = new Minesweeper.Model.TypedEvent();
+            }
+            ImageLoader.prototype.load = function () {
+                var _this = this;
+                var preloadDiv = $('<div/>').appendTo($('body')).attr('style', 'display:none');
+
+                var loadedCount = 0;
+                this.imageList.forEach(function (name) {
+                    App.addImage(preloadDiv, name).load(function () {
+                        loadedCount++;
+                        if (loadedCount == _this.imageList.length) {
+                            _this.onLoaded.trigger();
+                        }
+                    });
+                });
+            };
+            return ImageLoader;
+        })();
+        View.ImageLoader = ImageLoader;
     })(Minesweeper.View || (Minesweeper.View = {}));
     var View = Minesweeper.View;
 })(Minesweeper || (Minesweeper = {}));

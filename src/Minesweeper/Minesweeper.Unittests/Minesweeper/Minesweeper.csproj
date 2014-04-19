@@ -118,6 +118,11 @@
     <Content Include="Images\TipButtonPressed.png" />
     <Content Include="Images\TipButtonReady.png" />
     <Content Include="Images\TipGreen.png" />
+    <Content Include="Images\TipRed.png" />
+    <Content Include="Images\TipRedButtonDisabled.png" />
+    <Content Include="Images\TipRedButtonHover.png" />
+    <Content Include="Images\TipRedButtonPressed.png" />
+    <Content Include="Images\TipRedButtonReady.png" />
     <Content Include="Images\Unknown.png" />
     <Content Include="Images\Won.png" />
     <Content Include="Images\WrongFlag.png" />

@@ -170,7 +170,7 @@
             this._timerId = setInterval(() => {
                 this._elapsedTime++;
                 this.onElapsedTime.trigger(this._elapsedTime);
-                if (this._elapsedTime == 999) {
+                if (this._elapsedTime == 9999) {
                     this.stopTimer();
                 }
             }, 1000);
@@ -290,7 +290,6 @@
             var square = this.traverseFrom(this.getRandomCoordinates(), (s) => this.checkIfCanBeATip(s));
 
             if (square) {
-                square.isTip = true;
                 return square;
             } else {
                 return undefined;
@@ -303,25 +302,32 @@
             }
 
             var flagCount = 0;
-            var closedNeighbors = 0;
+            var closedCount = 0;
             var candidate: Square;
+            var closedCandidate: Square;
             this.forEachInVicinity(square, (square) => {
                 if (!square.isOpenned) {
+                    closedCount++;
                     if (square.isFlagged) {
                         flagCount++;
-                    } else if (!square.isTip) {
-                        closedNeighbors++;
+                    } else if (square.tipType === TipType.none) {
                         candidate = square;
                     }
                 }
                 return false;
             });
 
-            if (closedNeighbors === 0) {
+            if (candidate === undefined) {
                 return undefined;
             }
 
+            if (square.displayNumber === closedCount) {
+                candidate.tipType = TipType.mine;
+                return candidate;
+            }
+
             if (square.displayNumber === flagCount) {
+                candidate.tipType = TipType.safe;
                 return candidate;
             }
 
