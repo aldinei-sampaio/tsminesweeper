@@ -110,6 +110,8 @@
     <Content Include="Images\NormalButtonPressed.png" />
     <Content Include="Images\NormalButtonReady.png" />
     <Content Include="Images\Options.png" />
+    <Content Include="Images\PointsDark.png" />
+    <Content Include="Images\PointsLight.png" />
     <Content Include="Images\Ready.png" />
     <Content Include="Images\Started.png" />
     <Content Include="Images\Tip.png" />
@@ -127,9 +129,11 @@
     <Content Include="Images\Won.png" />
     <Content Include="Images\WrongFlag.png" />
     <Content Include="packages.config" />
-    <None Include="aldinei - FTP.pubxml" />
-    <None Include="aldinei - Web Deploy.pubxml" />
     <Content Include="app.full.js.map" />
+    <None Include="Properties\PublishProfiles\aldinei - FTP.pubxml" />
+    <Content Include="Properties\PublishProfiles\aldinei - FTP.pubxml.user" />
+    <None Include="Properties\PublishProfiles\aldinei - Web Deploy.pubxml" />
+    <Content Include="Properties\PublishProfiles\aldinei - Web Deploy.pubxml.user" />
     <None Include="Scripts\jquery-2.1.0.intellisense.js" />
     <Content Include="Scripts\jquery-2.1.0.js" />
     <Content Include="Scripts\jquery-2.1.0.min.js" />

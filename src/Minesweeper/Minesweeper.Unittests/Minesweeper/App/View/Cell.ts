@@ -30,6 +30,11 @@
             this._container.unbind();
             if (this._square.isOpenned) {
                 this.showOpennedSquare(true);
+                if (this._square.hasExploded) {
+                    this._container.addClass('exploded');
+                } else {
+                    this._container.addClass('openned');
+                }
             } else if (this._square.isFlagged) {
                 this.showButton(true);
                 this.showFlag();
@@ -117,9 +122,6 @@
                 return;
             }
             this.onClick.trigger(this._square);
-            if (this._square.hasMine) {
-                this._container.addClass('exploded');
-            }
         }
 
         private resetAndCreateDiv(): JQuery {

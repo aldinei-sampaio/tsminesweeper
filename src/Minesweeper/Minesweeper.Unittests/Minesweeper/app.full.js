@@ -18,7 +18,8 @@
             'MineLabel', 'ClockLabel', 'Tip', 'Options',
             'NormalButtonReady', 'NormalButtonHover', 'NormalButtonPressed', 'NormalButtonDisabled',
             'TipButtonReady', 'TipButtonHover', 'TipButtonPressed', 'TipButtonDisabled', 'TipGreen',
-            'TipRedButtonReady', 'TipRedButtonHover', 'TipRedButtonPressed', 'TipRedButtonDisabled', 'TipRed'
+            'TipRedButtonReady', 'TipRedButtonHover', 'TipRedButtonPressed', 'TipRedButtonDisabled', 'TipRed',
+            'PointsLight', 'PointsDark'
         ];
         loader.onLoaded.add(function () {
             return _this.showBoard(container);
@@ -41,13 +42,9 @@ var Minesweeper;
                 this._listeners = [];
             }
             TypedEvent.prototype.add = function (listener) {
-                /// <summary>Registers a new listener for the event.</summary>
-                /// <param name="listener">The callback function to register.</param>
                 this._listeners.push(listener);
             };
             TypedEvent.prototype.remove = function (listener) {
-                /// <summary>Unregisters a listener from the event.</summary>
-                /// <param name="listener">The callback function that was registered. If missing then all listeners will be removed.</param>
                 if (typeof listener === 'function') {
                     for (var i = 0, l = this._listeners.length; i < l; l++) {
                         if (this._listeners[i] === listener) {
@@ -65,8 +62,6 @@ var Minesweeper;
                 for (var _i = 0; _i < (arguments.length - 0); _i++) {
                     a[_i] = arguments[_i + 0];
                 }
-                /// <summary>Invokes all of the listeners for this event.</summary>
-                /// <param name="args">Optional set of arguments to pass to listners.</param>
                 var context = {};
                 var listeners = this._listeners.slice(0);
                 for (var i = 0, l = listeners.length; i < l; i++) {
@@ -92,6 +87,22 @@ var Minesweeper;
             GameState[GameState["Lost"] = 3] = "Lost";
         })(GameState || (GameState = {}));
 
+        var TimerInfo = (function () {
+            function TimerInfo(elapsedTime, changed) {
+                this.elapsedTime = elapsedTime;
+                this.changed = changed;
+            }
+            TimerInfo.prototype.getSeconds = function () {
+                return this.elapsedTime % 60;
+            };
+
+            TimerInfo.prototype.getMinutes = function () {
+                return Math.floor(this.elapsedTime / 60);
+            };
+            return TimerInfo;
+        })();
+        Model.TimerInfo = TimerInfo;
+
         var Field = (function () {
             function Field(rows, cols) {
                 this._rows = 0;
@@ -105,7 +116,6 @@ var Minesweeper;
                 this._state = 0 /* Ready */;
                 this._flaggedCount = 0;
                 this._mineCount = 0;
-                this._elapsedTime = 0;
                 this._putMinesLater = 0;
                 this.onGameOver = new Model.TypedEvent();
                 this.onGameStart = new Model.TypedEvent();
@@ -271,16 +281,20 @@ var Minesweeper;
                 this._state = 1 /* Started */;
                 this.onGameStart.trigger();
 
-                this._elapsedTime = 1;
+                this._elapsedTime = new TimerInfo(1, false);
                 this.onElapsedTime.trigger(this._elapsedTime);
 
                 this._timerId = setInterval(function () {
-                    _this._elapsedTime++;
+                    if (_this._elapsedTime.changed) {
+                        _this._elapsedTime.elapsedTime++;
+                    }
+                    _this._elapsedTime.changed = !_this._elapsedTime.changed;
+
                     _this.onElapsedTime.trigger(_this._elapsedTime);
-                    if (_this._elapsedTime == 9999) {
+                    if (_this._elapsedTime.elapsedTime == 5999) {
                         _this.stopTimer();
                     }
-                }, 1000);
+                }, 500);
             };
 
             Field.prototype.open = function (square) {
@@ -488,7 +502,6 @@ var Minesweeper;
                     return false;
                 });
                 if (closedCount > square.displayNumber) {
-                    //return tip;
                 } else {
                     return undefined;
                 }
@@ -533,6 +546,11 @@ var Minesweeper;
                 this._container.unbind();
                 if (this._square.isOpenned) {
                     this.showOpennedSquare(true);
+                    if (this._square.hasExploded) {
+                        this._container.addClass('exploded');
+                    } else {
+                        this._container.addClass('openned');
+                    }
                 } else if (this._square.isFlagged) {
                     this.showButton(true);
                     this.showFlag();
@@ -620,9 +638,6 @@ var Minesweeper;
                     return;
                 }
                 this.onClick.trigger(this._square);
-                if (this._square.hasMine) {
-                    this._container.addClass('exploded');
-                }
             };
 
             Cell.prototype.resetAndCreateDiv = function () {
@@ -721,7 +736,10 @@ var Minesweeper;
             };
 
             Board.prototype.updateFlagCount = function () {
-                this.showDisplay(this._headerFlagCountPanel, this._field.remainingFlags, 'MineLabel', 3);
+                var panel = this._headerFlagCountPanel;
+                panel.empty();
+                App.addImage(panel, 'MineLabel');
+                this.addDigits(panel, this._field.remainingFlags, 3);
             };
 
             Board.prototype.drawHeader = function (table) {
@@ -766,13 +784,17 @@ var Minesweeper;
                             _this._tipSpan.html('');
                         });
                         cell.onRightClick.add(function (square) {
-                            _this._field.flag(square);
-                            _this.updateFlagCount();
+                            _this.setFlag(square);
                             _this._tipSpan.html('');
                         });
                         this._cells.push(cell);
                     }
                 }
+            };
+
+            Board.prototype.setFlag = function (square) {
+                this._field.flag(square);
+                this.updateFlagCount();
             };
 
             Board.prototype.drawFlagDisplay = function (td) {
@@ -782,7 +804,7 @@ var Minesweeper;
 
             Board.prototype.drawTimerDisplay = function (td) {
                 this._headerTimerPanel = $('<div/>').appendTo(td).addClass('clockDisplay').attr('style', 'margin-left:auto');
-                this.showDisplay(this._headerTimerPanel, 0, 'ClockLabel', 4);
+                this.showTimeDisplay(this._headerTimerPanel, new Minesweeper.Model.TimerInfo(0, false));
             };
 
             Board.prototype.drawResetPanel = function (td) {
@@ -795,11 +817,7 @@ var Minesweeper;
                 });
             };
 
-            Board.prototype.showDisplay = function (panel, value, labelImage, size) {
-                panel.empty();
-
-                App.addImage(panel, labelImage);
-
+            Board.prototype.addDigits = function (panel, value, size) {
                 var digits = value.toString().split('');
                 var startDigit = digits.length - size;
                 for (var n = digits.length - size; n < digits.length; n++) {
@@ -808,8 +826,17 @@ var Minesweeper;
                 }
             };
 
+            Board.prototype.showTimeDisplay = function (panel, timerInfo) {
+                panel.empty();
+                App.addImage(panel, 'ClockLabel');
+                this.addDigits(panel, timerInfo.getMinutes(), 2);
+                App.addImage(panel, timerInfo.changed ? 'PointsDark' : 'PointsLight');
+                this.addDigits(panel, timerInfo.getSeconds(), 2);
+            };
+
             Board.prototype.reset = function () {
                 var _this = this;
+                this.stopAutoPlay();
                 if (this._field) {
                     this._field.dispose();
                 }
@@ -827,7 +854,9 @@ var Minesweeper;
                 this._field.onGameOver.add(function (result) {
                     _this._resetButton.empty();
                     App.addImage(_this._resetButton, result ? 'Won' : 'Lost');
-                    _this._tipButton.prop("disabled", true);
+                    if (_this._tipButton) {
+                        _this._tipButton.prop("disabled", true);
+                    }
                     _this._cells.forEach(function (item) {
                         item.reveal(result);
                     });
@@ -836,10 +865,15 @@ var Minesweeper;
                 this._field.onGameStart.add(function () {
                     _this._resetButton.empty();
                     App.addImage(_this._resetButton, 'Started');
+                    if (_this._options.autoPlay) {
+                        _this._autoPlayId = setInterval(function () {
+                            return _this.runAutoPlay();
+                        }, 500);
+                    }
                 });
 
                 this._field.onElapsedTime.add(function (value) {
-                    _this.showDisplay(_this._headerTimerPanel, value, 'ClockLabel', 4);
+                    _this.showTimeDisplay(_this._headerTimerPanel, value);
                 });
 
                 this._container.empty();
@@ -847,6 +881,29 @@ var Minesweeper;
                 this.drawHeader(table);
                 this.drawCells(table);
                 this.drawFooter(table);
+            };
+
+            Board.prototype.runAutoPlay = function () {
+                var square = this._field.createTip();
+                if (square) {
+                    switch (square.tipType) {
+                        case 1 /* safe */:
+                            this._field.open(square);
+                            return;
+                        case 2 /* mine */:
+                            this.setFlag(square);
+                            return;
+                    }
+                }
+                this.stopAutoPlay();
+                this._tipSpan.html('Jogo automático interrompido');
+            };
+
+            Board.prototype.stopAutoPlay = function () {
+                if (this._autoPlayId) {
+                    clearInterval(this._autoPlayId);
+                    this._autoPlayId = undefined;
+                }
             };
             return Board;
         })();
@@ -928,19 +985,21 @@ var Minesweeper;
                 this._mines = $('<input id="custom_mines" type="text" maxlength="3"></input>').appendTo(p);
                 this.updateCustomOptions();
 
-                var p = $('<p/>').appendTo(this._optionsPanel);
-                this._putMinesAfterFirstOpen = $('<input id="empty_square_on_first_click" type="checkbox" value="1" />').appendTo(p);
-                if (this.userOptions.putMinesAfterFirstOpen) {
-                    this._putMinesAfterFirstOpen.attr('checked', 'checked');
-                }
-                $('<label for="empty_square_on_first_click">Impedir fim de jogo no primeiro clique</label>').appendTo(p);
+                this._putMinesAfterFirstOpen = this.createCheckbox('empty_square_on_first_click', 'Impedir fim de jogo no primeiro clique', this.userOptions.putMinesAfterFirstOpen);
 
+                this._allowTips = this.createCheckbox('allow_tips', 'Exibir opção de dicas', this.userOptions.allowTips);
+
+                this._autoPlay = this.createCheckbox('auto_play', 'Jogo automático', this.userOptions.autoPlay);
+            };
+
+            OptionsDialog.prototype.createCheckbox = function (id, label, checked) {
                 var p = $('<p/>').appendTo(this._optionsPanel);
-                this._allowTips = $('<input id="allow_tips" type="checkbox" value="1" />').appendTo(p);
-                if (this.userOptions.allowTips) {
-                    this._allowTips.attr('checked', 'checked');
+                var chk = $('<input id="' + id + '" type="checkbox" value="1" />').appendTo(p);
+                if (checked) {
+                    chk.attr('checked', 'checked');
                 }
-                $('<label for="allow_tips">Exibir opção de dicas</label>').appendTo(p);
+                $('<label for="' + id + '">' + label + '</label>').appendTo(p);
+                return chk;
             };
 
             OptionsDialog.prototype.validate = function () {
@@ -1008,6 +1067,7 @@ var Minesweeper;
                             }
                             _this.userOptions.putMinesAfterFirstOpen = _this._putMinesAfterFirstOpen.is(':checked');
                             _this.userOptions.allowTips = _this._allowTips.is(':checked');
+                            _this.userOptions.autoPlay = _this._autoPlay.is(':checked');
                             _this._optionsPanel.dialog("close");
                             _this.callback();
                         },
@@ -1059,9 +1119,22 @@ var Minesweeper;
                     gameMode: 0 /* Begginner */,
                     customOptions: BoardOptions.clone(_begginnerOptions),
                     putMinesAfterFirstOpen: true,
-                    allowTips: true
+                    allowTips: true,
+                    autoPlay: false
                 };
             }
+            Object.defineProperty(UserOptions.prototype, "autoPlay", {
+                get: function () {
+                    return this._allOptions.autoPlay;
+                },
+                set: function (value) {
+                    this._allOptions.autoPlay = value;
+                },
+                enumerable: true,
+                configurable: true
+            });
+
+
             Object.defineProperty(UserOptions.prototype, "gameMode", {
                 get: function () {
                     return this._allOptions.gameMode;
@@ -1181,6 +1254,7 @@ var Minesweeper;
                 this._tipType = 0 /* none */;
                 this.onUpdate = new Model.TypedEvent();
                 this.hasMine = false;
+                this.hasExploded = false;
                 this.displayNumber = 0;
                 this._row = row;
                 this._col = col;
@@ -1206,6 +1280,9 @@ var Minesweeper;
                     return;
                 }
                 this._isOpenned = true;
+                if (this.hasMine) {
+                    this.hasExploded = true;
+                }
                 this.onUpdate.trigger();
             };
 
@@ -1294,4 +1371,3 @@ var Minesweeper;
     })(Minesweeper.View || (Minesweeper.View = {}));
     var View = Minesweeper.View;
 })(Minesweeper || (Minesweeper = {}));
-//# sourceMappingURL=app.full.js.map

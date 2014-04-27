@@ -140,6 +140,10 @@
             background: none;
             background-color: red;
         }
+
+        .openned div {
+            background-color: #e5efde;
+        }
         
         .headerPanel {
             text-align: center;
@@ -159,7 +163,7 @@
         }
 
         .clockDisplay {
-            width: 68px;
+            width: 73px;
             height: 24px;
             background: black;
             padding: 2px;

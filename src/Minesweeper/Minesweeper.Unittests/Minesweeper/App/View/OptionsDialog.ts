@@ -10,6 +10,7 @@
         private _mines: JQuery;
         private _putMinesAfterFirstOpen: JQuery;
         private _allowTips: JQuery;
+        private _autoPlay: JQuery;
 
         constructor(public userOptions: UserOptions, public callback: () => void) {
         }
@@ -80,20 +81,34 @@
             $('<label for="custom_mines">Minas (' + minValues.mines.toString() + ' a ' + maxValues.mines.toString() + '):&nbsp;</label>').appendTo(p);
             this._mines = $('<input id="custom_mines" type="text" maxlength="3"></input>').appendTo(p);
             this.updateCustomOptions();
-            
-            var p = $('<p/>').appendTo(this._optionsPanel);
-            this._putMinesAfterFirstOpen = $('<input id="empty_square_on_first_click" type="checkbox" value="1" />').appendTo(p);
-            if (this.userOptions.putMinesAfterFirstOpen) {
-                this._putMinesAfterFirstOpen.attr('checked', 'checked');
-            }
-            $('<label for="empty_square_on_first_click">Impedir fim de jogo no primeiro clique</label>').appendTo(p);
 
+            this._putMinesAfterFirstOpen = this.createCheckbox(
+                'empty_square_on_first_click',
+                'Impedir fim de jogo no primeiro clique',
+                this.userOptions.putMinesAfterFirstOpen
+            );
+
+            this._allowTips = this.createCheckbox(
+                'allow_tips',
+                'Exibir opção de dicas',
+                this.userOptions.allowTips
+            );
+
+            this._autoPlay = this.createCheckbox(
+                'auto_play',
+                'Jogo automático',
+                this.userOptions.autoPlay
+            );
+        }
+
+        private createCheckbox(id: string, label: string, checked: boolean): JQuery {
             var p = $('<p/>').appendTo(this._optionsPanel);
-            this._allowTips = $('<input id="allow_tips" type="checkbox" value="1" />').appendTo(p);
-            if (this.userOptions.allowTips) {
-                this._allowTips.attr('checked', 'checked');
+            var chk = $('<input id="' + id + '" type="checkbox" value="1" />').appendTo(p);
+            if (checked) {
+                chk.attr('checked', 'checked');
             }
-            $('<label for="allow_tips">Exibir opção de dicas</label>').appendTo(p);
+            $('<label for="' + id + '">' + label + '</label>').appendTo(p);
+            return chk;
         }
 
         private validate(): boolean {
@@ -161,6 +176,7 @@
                             }
                             this.userOptions.putMinesAfterFirstOpen = this._putMinesAfterFirstOpen.is(':checked');
                             this.userOptions.allowTips = this._allowTips.is(':checked');
+                            this.userOptions.autoPlay = this._autoPlay.is(':checked');
                             this._optionsPanel.dialog("close");
                             this.callback();
                         },

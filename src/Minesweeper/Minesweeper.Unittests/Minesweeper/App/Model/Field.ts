@@ -11,6 +11,19 @@
         col: number;
     }
 
+    export class TimerInfo {
+        constructor(public elapsedTime: number, public changed: boolean) {
+        }
+
+        public getSeconds(): number {
+            return this.elapsedTime % 60;
+        }
+
+        public getMinutes(): number {
+            return Math.floor(this.elapsedTime / 60);
+        }
+    }
+
     export class Field {
         private _squares: Square[][];
         private _rows = 0;
@@ -24,13 +37,13 @@
         private _state = GameState.Ready;
         private _flaggedCount = 0;
         private _mineCount = 0;
-        private _elapsedTime = 0;
+        private _elapsedTime: TimerInfo;
         private _timerId: number;
         private _putMinesLater = 0;
 
         public onGameOver: IMessageEvent<boolean> = new TypedEvent();
         public onGameStart: IEvent = new TypedEvent();
-        public onElapsedTime: IMessageEvent<number> = new TypedEvent();
+        public onElapsedTime: IMessageEvent<TimerInfo> = new TypedEvent();
 
         constructor(rows: number, cols: number) {
             if (rows <= 0 || cols <= 0) {
@@ -164,16 +177,20 @@
             this._state = GameState.Started;
             this.onGameStart.trigger();
 
-            this._elapsedTime = 1;
+            this._elapsedTime = new TimerInfo(1, false);
             this.onElapsedTime.trigger(this._elapsedTime);
 
             this._timerId = setInterval(() => {
-                this._elapsedTime++;
+                if (this._elapsedTime.changed) {
+                    this._elapsedTime.elapsedTime++;
+                }
+                this._elapsedTime.changed = !this._elapsedTime.changed;
+
                 this.onElapsedTime.trigger(this._elapsedTime);
-                if (this._elapsedTime == 9999) {
+                if (this._elapsedTime.elapsedTime == 5999) {
                     this.stopTimer();
                 }
-            }, 1000);
+            }, 500);
         }
 
         public open(square: Square): void {

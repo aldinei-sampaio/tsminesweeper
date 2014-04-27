@@ -21,6 +21,7 @@
         }
 
         public hasMine = false;
+        public hasExploded = false;
         public displayNumber = 0;
 
         public get isFlagged() {
@@ -36,6 +37,9 @@
                 return;
             }
             this._isOpenned = true;
+            if (this.hasMine) {
+                this.hasExploded = true;
+            }
             this.onUpdate.trigger();
         }
 

@@ -17,7 +17,8 @@
             'MineLabel', 'ClockLabel', 'Tip', 'Options',
             'NormalButtonReady', 'NormalButtonHover', 'NormalButtonPressed', 'NormalButtonDisabled',
             'TipButtonReady', 'TipButtonHover', 'TipButtonPressed', 'TipButtonDisabled', 'TipGreen',
-            'TipRedButtonReady', 'TipRedButtonHover', 'TipRedButtonPressed', 'TipRedButtonDisabled', 'TipRed'
+            'TipRedButtonReady', 'TipRedButtonHover', 'TipRedButtonPressed', 'TipRedButtonDisabled', 'TipRed',
+            'PointsLight', 'PointsDark'
         ];
         loader.onLoaded.add(() => this.showBoard(container));
         loader.load()

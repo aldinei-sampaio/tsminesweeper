@@ -27,6 +27,7 @@
         customOptions: BoardOptions;
         putMinesAfterFirstOpen: boolean;
         allowTips: boolean;
+        autoPlay: boolean;
     }
 
     export class UserOptions  {
@@ -34,8 +35,17 @@
             gameMode: GameMode.Begginner,
             customOptions: BoardOptions.clone(_begginnerOptions),
             putMinesAfterFirstOpen: true,
-            allowTips: true
+            allowTips: true,
+            autoPlay: false
         };
+
+        public get autoPlay(): boolean {
+            return this._allOptions.autoPlay;
+        }
+
+        public set autoPlay(value: boolean) {
+            this._allOptions.autoPlay = value;
+        }
 
         public get gameMode(): GameMode {
             return this._allOptions.gameMode;

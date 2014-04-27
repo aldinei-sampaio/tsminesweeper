@@ -13,6 +13,7 @@
         private _options = UserOptions.load();
         private _tipSpan: JQuery;
         private _optionsDialog = new OptionsDialog(this._options, () => { this._options.save(); this.reset(); });
+        private _autoPlayId: number;
 
         constructor(container: JQuery) {
             this._container = container;
@@ -60,9 +61,11 @@
             this._optionsButton.bind('click', () => this._optionsDialog.show());
         }
 
-
         private updateFlagCount(): void {
-            this.showDisplay(this._headerFlagCountPanel, this._field.remainingFlags, 'MineLabel', 3);
+            var panel = this._headerFlagCountPanel;
+            panel.empty();
+            App.addImage(panel, 'MineLabel');
+            this.addDigits(panel, this._field.remainingFlags, 3);
         }
 
         private drawHeader(table: JQuery): void {
@@ -102,10 +105,15 @@
                     var cell = new Cell(td, this._field.getSquare(i, j));
                     cell.onClick.add((square) => { this._field.open(square); this._tipSpan.html(''); });
                     cell.onBothClick.add((square) => { this._field.openNeighborhood(square);; this._tipSpan.html(''); });
-                    cell.onRightClick.add((square) => { this._field.flag(square); this.updateFlagCount(); this._tipSpan.html(''); });
+                    cell.onRightClick.add((square) => { this.setFlag(square); this._tipSpan.html(''); });
                     this._cells.push(cell);
                 }
             }
+        }
+
+        private setFlag(square: Model.Square): void {
+            this._field.flag(square);
+            this.updateFlagCount();
         }
 
         private drawFlagDisplay(td: JQuery): void {
@@ -120,7 +128,7 @@
                 .appendTo(td)
                 .addClass('clockDisplay')
                 .attr('style', 'margin-left:auto');
-            this.showDisplay(this._headerTimerPanel, 0, 'ClockLabel', 4);
+            this.showTimeDisplay(this._headerTimerPanel, new Model.TimerInfo(0, false));
         }
 
         private drawResetPanel(td: JQuery): void {
@@ -132,11 +140,7 @@
             this._resetButton.bind('click', () => { this.reset() });
         }
 
-        private showDisplay(panel: JQuery, value: number, labelImage: string, size: number): void {
-            panel.empty();
-
-            App.addImage(panel, labelImage);
-
+        private addDigits(panel: JQuery, value: number, size: number) {
             var digits = value.toString().split('');
             var startDigit = digits.length - size;
             for (var n = digits.length - size; n < digits.length; n++) {
@@ -145,7 +149,16 @@
             }
         }
 
+        private showTimeDisplay(panel: JQuery, timerInfo: Model.TimerInfo): void {
+            panel.empty();
+            App.addImage(panel, 'ClockLabel');
+            this.addDigits(panel, timerInfo.getMinutes(), 2);
+            App.addImage(panel, timerInfo.changed ? 'PointsDark' : 'PointsLight');
+            this.addDigits(panel, timerInfo.getSeconds(), 2);
+        }
+
         public reset(): void {
+            this.stopAutoPlay();
             if (this._field) {
                 this._field.dispose();
             }
@@ -161,17 +174,22 @@
             this._field.onGameOver.add((result) => {
                 this._resetButton.empty();
                 App.addImage(this._resetButton, result ? 'Won' : 'Lost');
-                this._tipButton.prop("disabled", true);
+                if (this._tipButton) {
+                    this._tipButton.prop("disabled", true);
+                }
                 this._cells.forEach((item) => { item.reveal(result) });
             });
 
             this._field.onGameStart.add(() => {
                 this._resetButton.empty();
                 App.addImage(this._resetButton, 'Started');
+                if (this._options.autoPlay) {
+                    this._autoPlayId = setInterval(() => this.runAutoPlay(), 500);
+                }
             });
 
             this._field.onElapsedTime.add((value) => {
-                this.showDisplay(this._headerTimerPanel, value, 'ClockLabel', 4);
+                this.showTimeDisplay(this._headerTimerPanel, value);
             });
 
             this._container.empty();
@@ -179,6 +197,29 @@
             this.drawHeader(table);
             this.drawCells(table);
             this.drawFooter(table);
+        }
+
+        private runAutoPlay(): void {
+            var square = this._field.createTip();
+            if (square) {
+                switch (square.tipType) {
+                    case Model.TipType.safe:
+                        this._field.open(square);
+                        return;
+                    case Model.TipType.mine:
+                        this.setFlag(square);
+                        return;
+                }
+            }
+            this.stopAutoPlay();
+            this._tipSpan.html('Jogo automático interrompido');
+        }
+
+        private stopAutoPlay(): void {
+            if (this._autoPlayId) {
+                clearInterval(this._autoPlayId);
+                this._autoPlayId = undefined;
+            }
         }
     }
 } 
