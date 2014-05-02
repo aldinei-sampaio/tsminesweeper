@@ -12,6 +12,10 @@ Releases
 
 O jogo está disponível online em http://aldinei.azurewebsites.net/
 
+Versão 0.1.9 (01/05/2014)
+-------------------------
+- Os números agora ficam levemente desfocados quando não há mais quadros vizinhos que possam ser abertos
+
 Versão 0.1.8 (26/04/2014)
 -------------------------
 - Visualização de tempo decorrido modificada para o formato de hora 00:00 (minutos:segundos)
