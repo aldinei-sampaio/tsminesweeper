@@ -60,10 +60,13 @@
             this._squares = [];
             this._squareCount = rows * cols;
 
-            for (var i = 0; i < this._rows; i++) {
+            for (var i = this.minRow; i <= this.maxRow; i++) {
                 this._squares[i] = [];
-                for (var j = 0; j < this._cols; j++) {
-                    this._squares[i].push(new Square(i, j));
+                var rowCorner = (i === this.minRow || i === this.maxRow);
+                for (var j = this.minCol; j <= this.maxCol; j++) {
+                    var colCorner = (j === this.minCol || j === this.maxCol);
+                    var neighbors = rowCorner ? (colCorner ? 3 : 5) : (colCorner ? 5 : 8);
+                    this._squares[i].push(new Square(i, j, neighbors));
                 }
             }
         }
@@ -163,15 +166,17 @@
         private forEachInVicinity(item: Square, callbackfn: (item: Square) => boolean) {
             for (var i = Math.max(item.row - 1, this._minRow); i <= Math.min(item.row + 1, this._maxRow); i++) {
                 for (var j = Math.max(item.col - 1, this._minCol); j <= Math.min(item.col + 1, this._maxCol); j++) {
-                    if (callbackfn(this.getSquare(i, j))) {
-                        return;
+                    if (i !== item.row || j !== item.col) {
+                        if (callbackfn(this.getSquare(i, j))) {
+                            return;
+                        }
                     }
                 }
             }
         }
 
         private registerStart(): void {
-            if (this._state != GameState.Ready) {
+            if (this._state !== GameState.Ready) {
                 return;
             }
             this._state = GameState.Started;
@@ -187,7 +192,7 @@
                 this._elapsedTime.changed = !this._elapsedTime.changed;
 
                 this.onElapsedTime.trigger(this._elapsedTime);
-                if (this._elapsedTime.elapsedTime == 5999) {
+                if (this._elapsedTime.elapsedTime === 5999) {
                     this.stopTimer();
                 }
             }, 500);
@@ -201,7 +206,7 @@
 
             this.registerStart();
 
-            square.open();
+            this.openSquare(square);
 
             if (square.hasMine) {
                 this.stopTimer();
@@ -212,40 +217,46 @@
 
             this._openedCount++;
 
-            if (square.displayNumber == 0) {
+            if (square.displayNumber === 0) {
                 this.openAllNeighbors(square);
             } else {
                 this.openEmptyNeighbors(square);
             }
 
-            if (this._openedCount == this.openableCount()) {
+            if (this._openedCount === this.openableCount()) {
                 this.stopTimer();
                 this._state = GameState.Won;
                 this.onGameOver.trigger(true);
             }
+
+        }
+
+        private openSquare(square: Square): void {
+            square.open();
+            this.forEachInVicinity(square, (i) => { i.decrementNeighborsClosed(); return false; });
         }
 
         private openEmptyNeighbors(square: Square) : void {
             this.forEachInVicinity(square, (item) => {
                 if (!item.isOpenned && !item.isFlagged && !item.hasMine && item.displayNumber == 0) {
-                    item.open();
+                    this.openSquare(item);
                     this._openedCount++;
                     this.openAllNeighbors(item);      
                 }
-                return (this._state == GameState.Won || this._state == GameState.Lost);
+                return (this._state === GameState.Won || this._state === GameState.Lost);
             });
         }
 
         private openAllNeighbors(square: Square): void {
             this.forEachInVicinity(square, (item) => {
                 if (!item.isOpenned && !item.isFlagged && !item.hasMine) {
-                    item.open();
+                    this.openSquare(item);
                     this._openedCount++;
-                    if (item.displayNumber == 0) {
+                    if (item.displayNumber === 0) {
                         this.openAllNeighbors(item);
                     }
                 }
-                return (this._state == GameState.Won || this._state == GameState.Lost);
+                return (this._state === GameState.Won || this._state === GameState.Lost);
             });
         }
 
@@ -288,11 +299,13 @@
         public flag(square: Square): void {
             if (square.isFlagged) {
                 this._flaggedCount--;
+                this.forEachInVicinity(square, (i) => { i.incrementNeighborsClosed(); return false; } );
             } else if (!square.isUnknown) {
                 if (this.remainingFlags <= 0) {
                     return;
                 }
                 this._flaggedCount++;
+                this.forEachInVicinity(square, (i) => { i.decrementNeighborsClosed(); return false; });
             }
             this.registerStart();
             square.toggleFlag();
@@ -368,29 +381,6 @@
                 }
             } while (n !== coordsCellNumber);
             return undefined;
-        }
-
-        private checkForBombs(square: Square): void {
-            if (!square.isOpenned) {
-                return;
-            }
-            var closedCount = 0;
-            var tip: Square;
-            this.forEachInVicinity(square, (item) => {
-                if (!item.isOpenned) {
-                    tip = item;
-                    closedCount++;
-                    if (closedCount > square.displayNumber) {
-                        return true;
-                    }
-                }
-                return false;
-            });
-            if (closedCount > square.displayNumber) {
-                //return tip;
-            } else {
-                return undefined;
-            }
         }
     }
 };

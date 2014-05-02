@@ -12,6 +12,7 @@
         var loader = new Minesweeper.View.ImageLoader();
         loader.imageList = [
             '1', '2', '3', '4', '5', '6', '7', '8',
+            '1a', '2a', '3a', '4a', '5a', '6a', '7a', '8a',
             'Mine', 'Flag', 'Unknown', 'WrongFlag',
             'Counter0', 'Counter1', 'Counter2', 'Counter3', 'Counter4', 'Counter5', 'Counter6', 'Counter7', 'Counter8', 'Counter9',
             'Ready', 'Started', 'Won', 'Lost',
@@ -28,8 +29,16 @@
     };
 
     App.showBoard = function (container) {
+        this.preLoadGame();
         var board = new Minesweeper.View.Board(container);
         board.reset();
+    };
+
+    App.preLoadGame = function () {
+        var field = new Minesweeper.Model.Field(3, 3);
+        field.putMine(field.getSquare(0, 0));
+        field.open(field.getSquare(1, 1));
+        field.dispose();
     };
     App.version = '0.1.6';
     return App;
@@ -134,10 +143,13 @@ var Minesweeper;
                 this._squares = [];
                 this._squareCount = rows * cols;
 
-                for (var i = 0; i < this._rows; i++) {
+                for (var i = this.minRow; i <= this.maxRow; i++) {
                     this._squares[i] = [];
-                    for (var j = 0; j < this._cols; j++) {
-                        this._squares[i].push(new Model.Square(i, j));
+                    var rowCorner = (i === this.minRow || i === this.maxRow);
+                    for (var j = this.minCol; j <= this.maxCol; j++) {
+                        var colCorner = (j === this.minCol || j === this.maxCol);
+                        var neighbors = rowCorner ? (colCorner ? 3 : 5) : (colCorner ? 5 : 8);
+                        this._squares[i].push(new Model.Square(i, j, neighbors));
                     }
                 }
             }
@@ -266,8 +278,10 @@ var Minesweeper;
             Field.prototype.forEachInVicinity = function (item, callbackfn) {
                 for (var i = Math.max(item.row - 1, this._minRow); i <= Math.min(item.row + 1, this._maxRow); i++) {
                     for (var j = Math.max(item.col - 1, this._minCol); j <= Math.min(item.col + 1, this._maxCol); j++) {
-                        if (callbackfn(this.getSquare(i, j))) {
-                            return;
+                        if (i !== item.row || j !== item.col) {
+                            if (callbackfn(this.getSquare(i, j))) {
+                                return;
+                            }
                         }
                     }
                 }
@@ -275,7 +289,7 @@ var Minesweeper;
 
             Field.prototype.registerStart = function () {
                 var _this = this;
-                if (this._state != 0 /* Ready */) {
+                if (this._state !== 0 /* Ready */) {
                     return;
                 }
                 this._state = 1 /* Started */;
@@ -291,7 +305,7 @@ var Minesweeper;
                     _this._elapsedTime.changed = !_this._elapsedTime.changed;
 
                     _this.onElapsedTime.trigger(_this._elapsedTime);
-                    if (_this._elapsedTime.elapsedTime == 5999) {
+                    if (_this._elapsedTime.elapsedTime === 5999) {
                         _this.stopTimer();
                     }
                 }, 500);
@@ -305,7 +319,7 @@ var Minesweeper;
 
                 this.registerStart();
 
-                square.open();
+                this.openSquare(square);
 
                 if (square.hasMine) {
                     this.stopTimer();
@@ -316,28 +330,36 @@ var Minesweeper;
 
                 this._openedCount++;
 
-                if (square.displayNumber == 0) {
+                if (square.displayNumber === 0) {
                     this.openAllNeighbors(square);
                 } else {
                     this.openEmptyNeighbors(square);
                 }
 
-                if (this._openedCount == this.openableCount()) {
+                if (this._openedCount === this.openableCount()) {
                     this.stopTimer();
                     this._state = 2 /* Won */;
                     this.onGameOver.trigger(true);
                 }
             };
 
+            Field.prototype.openSquare = function (square) {
+                square.open();
+                this.forEachInVicinity(square, function (i) {
+                    i.decrementNeighborsClosed();
+                    return false;
+                });
+            };
+
             Field.prototype.openEmptyNeighbors = function (square) {
                 var _this = this;
                 this.forEachInVicinity(square, function (item) {
                     if (!item.isOpenned && !item.isFlagged && !item.hasMine && item.displayNumber == 0) {
-                        item.open();
+                        _this.openSquare(item);
                         _this._openedCount++;
                         _this.openAllNeighbors(item);
                     }
-                    return (_this._state == 2 /* Won */ || _this._state == 3 /* Lost */);
+                    return (_this._state === 2 /* Won */ || _this._state === 3 /* Lost */);
                 });
             };
 
@@ -345,13 +367,13 @@ var Minesweeper;
                 var _this = this;
                 this.forEachInVicinity(square, function (item) {
                     if (!item.isOpenned && !item.isFlagged && !item.hasMine) {
-                        item.open();
+                        _this.openSquare(item);
                         _this._openedCount++;
-                        if (item.displayNumber == 0) {
+                        if (item.displayNumber === 0) {
                             _this.openAllNeighbors(item);
                         }
                     }
-                    return (_this._state == 2 /* Won */ || _this._state == 3 /* Lost */);
+                    return (_this._state === 2 /* Won */ || _this._state === 3 /* Lost */);
                 });
             };
 
@@ -400,11 +422,19 @@ var Minesweeper;
             Field.prototype.flag = function (square) {
                 if (square.isFlagged) {
                     this._flaggedCount--;
+                    this.forEachInVicinity(square, function (i) {
+                        i.incrementNeighborsClosed();
+                        return false;
+                    });
                 } else if (!square.isUnknown) {
                     if (this.remainingFlags <= 0) {
                         return;
                     }
                     this._flaggedCount++;
+                    this.forEachInVicinity(square, function (i) {
+                        i.decrementNeighborsClosed();
+                        return false;
+                    });
                 }
                 this.registerStart();
                 square.toggleFlag();
@@ -483,28 +513,6 @@ var Minesweeper;
                     }
                 } while(n !== coordsCellNumber);
                 return undefined;
-            };
-
-            Field.prototype.checkForBombs = function (square) {
-                if (!square.isOpenned) {
-                    return;
-                }
-                var closedCount = 0;
-                var tip;
-                this.forEachInVicinity(square, function (item) {
-                    if (!item.isOpenned) {
-                        tip = item;
-                        closedCount++;
-                        if (closedCount > square.displayNumber) {
-                            return true;
-                        }
-                    }
-                    return false;
-                });
-                if (closedCount > square.displayNumber) {
-                } else {
-                    return undefined;
-                }
             };
             return Field;
         })();
@@ -587,9 +595,10 @@ var Minesweeper;
                 } else if (mines == 0) {
                     div.html('&nbsp;');
                 } else {
-                    App.addImage(div, mines.toString());
+                    var imageName = this._square.hasNeighborsClosed ? mines.toString() : mines.toString() + 'a';
+                    App.addImage(div, imageName);
 
-                    if (isEnabled) {
+                    if (isEnabled && this._square.hasNeighborsClosed) {
                         this._container.bind('mouseup', function (e) {
                             if (_this._leftClicked && _this._rightClicked) {
                                 _this.onBothClick.trigger(_this._square);
@@ -1245,20 +1254,30 @@ var Minesweeper;
         var TipType = Model.TipType;
 
         var Square = (function () {
-            function Square(row, col) {
+            function Square(row, col, neighborsClosed) {
                 this._row = 0;
                 this._col = 0;
                 this._isOpenned = false;
                 this._isFlagged = false;
                 this._isUnknown = false;
                 this._tipType = 0 /* none */;
+                this._neighborsClosed = 0;
                 this.onUpdate = new Model.TypedEvent();
                 this.hasMine = false;
                 this.hasExploded = false;
                 this.displayNumber = 0;
                 this._row = row;
                 this._col = col;
+                this._neighborsClosed = neighborsClosed;
             }
+            Object.defineProperty(Square.prototype, "hasNeighborsClosed", {
+                get: function () {
+                    return this._neighborsClosed > 0;
+                },
+                enumerable: true,
+                configurable: true
+            });
+
             Object.defineProperty(Square.prototype, "isFlagged", {
                 get: function () {
                     return this._isFlagged;
@@ -1336,6 +1355,22 @@ var Minesweeper;
                 configurable: true
             });
 
+
+            Square.prototype.incrementNeighborsClosed = function () {
+                this._neighborsClosed++;
+                if (this._neighborsClosed === 1) {
+                    this.onUpdate.trigger();
+                }
+            };
+
+            Square.prototype.decrementNeighborsClosed = function () {
+                if (this._neighborsClosed > 0) {
+                    this._neighborsClosed--;
+                    if (this._neighborsClosed === 0) {
+                        this.onUpdate.trigger();
+                    }
+                }
+            };
             return Square;
         })();
         Model.Square = Square;

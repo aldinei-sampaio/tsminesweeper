@@ -70,9 +70,10 @@
             } else if (mines == 0) {
                 div.html('&nbsp;');
             } else {
-                App.addImage(div, mines.toString());
+                var imageName = this._square.hasNeighborsClosed ? mines.toString() : mines.toString() + 'a';
+                App.addImage(div, imageName);
 
-                if (isEnabled) {
+                if (isEnabled && this._square.hasNeighborsClosed) {
                     this._container.bind('mouseup', (e) => {
                         if (this._leftClicked && this._rightClicked) {
                             this.onBothClick.trigger(this._square);

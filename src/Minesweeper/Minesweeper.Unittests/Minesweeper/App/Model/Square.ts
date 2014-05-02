@@ -12,17 +12,23 @@
         private _isFlagged = false;
         private _isUnknown = false;
         private _tipType = TipType.none;
+        private _neighborsClosed = 0;
 
         public onUpdate: IEvent = new TypedEvent();
 
-        constructor(row: number, col: number) {
+        constructor(row: number, col: number, neighborsClosed: number) {
             this._row = row;
             this._col = col;
+            this._neighborsClosed = neighborsClosed;
         }
 
         public hasMine = false;
         public hasExploded = false;
         public displayNumber = 0;
+
+        public get hasNeighborsClosed(): boolean {
+            return this._neighborsClosed > 0;
+        }
 
         public get isFlagged() {
             return this._isFlagged;
@@ -75,6 +81,22 @@
             if (this._tipType !== value) {
                 this._tipType = value;
                 this.onUpdate.trigger();
+            }
+        }
+
+        public incrementNeighborsClosed(): void {
+            this._neighborsClosed++;
+            if (this._neighborsClosed === 1) {
+                this.onUpdate.trigger();
+            }
+        }
+
+        public decrementNeighborsClosed(): void {
+            if (this._neighborsClosed > 0) {
+                this._neighborsClosed--;
+                if (this._neighborsClosed === 0) {
+                    this.onUpdate.trigger();
+                }
             }
         }
     }
