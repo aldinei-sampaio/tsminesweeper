@@ -12,6 +12,13 @@ Releases
 
 O jogo está disponível online em http://aldinei.azurewebsites.net/
 
+Versão 0.1.8 (26/04/2014)
+-------------------------
+- Visualização de tempo decorrido modificada para o formato de hora 00:00 (minutos:segundos)
+- Incluída opção de jogo automático
+- Corrigido erro de javascript ao abrir quadro com mina quando a opção de dica está desabilitada
+- Incluído um fundo esverdeado para quadros abertos que não tenham mina
+
 Versão 0.1.7 (19/04/2014)
 -------------------------
 - Issue #1 (novidade): Incluída opção "Customizado" na janela de opções. Essa opção permite ao usuário escolher o tamanho do tabuleiro e o número de minas
